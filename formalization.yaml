@@ -187,7 +187,8 @@ alignment:
 
 acknowledgements: >-
   This formalization was carried out at the Mathematical Institute of the University of Bonn.
-  The author thanks the Lean and Mathlib communities (leanprover-community) for the Lean 4
-  theorem prover and the Mathlib library, the Palomar Registry for the starter repository on
-  which the project layout is based, and Anthropic's Claude Code, which was used for the
-  AI-assisted development of the Lean code.
+  The author was partly supported by the grant 26-21107S of the Czech Science Foundation and by
+  the ERC Synergy grant HALF 101224275. The author thanks the Lean and Mathlib communities
+  (leanprover-community) for the Lean 4 theorem prover and the Mathlib library, the Palomar
+  Registry for the starter repository on which the project layout is based, and Anthropic's
+  Claude Code, which was used for the AI-assisted development of the Lean code.
