@@ -97,7 +97,7 @@ status:
 automation:
   methods:
     - method: "agent"
-      models: ["Claude (Anthropic), via Claude Code"]
+      models: ["Claude Fable 5.1 (Anthropic, model id claude-fable-5-1, high reasoning effort)"]
       framework: "Claude Code"
       tool_setup: >-
         AI-assisted: the Lean statements and proofs were written by an AI coding agent
