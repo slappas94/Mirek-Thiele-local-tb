@@ -54,11 +54,12 @@ The development was written and checked as a single file against the live Lean w
 warnings. For this repository it was split into four modules under the 10,000-line cap and ported
 to the module system (`module`, `public import`, `@[expose] public section`); the split was done
 mechanically at section boundaries, re-declaring the enclosing `namespace`, `section`, `open` and
-`variable` context at the top of each module. The split files have not yet been built locally;
-the first local `lake build` should be treated as the acceptance test of the port, and any issue
-it reports is expected to be a module-visibility or a Mathlib-pin detail, not a mathematical one.
-`Challenge.lean` alone and the three `Solution.lean` statements against the full development were
-checked on the web editor.
+`variable` context at the top of each module. The resulting project was built locally with the
+pinned toolchain and Mathlib (`lake exe cache get`, `lake build`): all modules compile, the only
+warnings are the three deliberate `sorry`s of `Challenge.lean`, and `#print axioms` on the three
+theorems of `Solution.lean` reports exactly `propext`, `Classical.choice` and `Quot.sound`.
+`lake comparator` has not been run locally (it needs the Linux `bwrap` sandbox); Palomar runs it
+during verification.
 
 ## Submitting to Palomar
 
