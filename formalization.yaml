@@ -93,10 +93,6 @@ status:
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: []
-  main_results:
-    - "MirekThiele.theorem_1_3 — Theorem 1.3, perfect multilinear local T(1) theorem"
-    - "MirekThiele.theorem_1_4 — Theorem 1.4, perfect multilinear local T(b) theorem"
-    - "MirekThiele.theorem_1_11 — Theorem 1.11, perfect multilinear global T(b) theorem"
 
 automation:
   methods:
