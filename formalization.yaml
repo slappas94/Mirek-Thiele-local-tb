@@ -1,0 +1,186 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+# formalization.yaml v0.4
+version: "v0.4"
+
+project:
+  name: "A local T(b) theorem for perfect multilinear Calderón–Zygmund operators (Mirek–Thiele), formalized in Lean 4"
+  description: >-
+    A complete Lean 4 / Mathlib formalization of the three main theorems of M. Mirek and
+    C. Thiele, "A local T(b) theorem for perfect multilinear Calderón–Zygmund operators",
+    Proc. London Math. Soc. 114 (2017): the perfect multilinear local T(1) theorem
+    (Theorem 1.3), the perfect multilinear local T(b) theorem with general testing functions
+    on admissible collections of paths (Theorem 1.4), and the perfect multilinear global T(b)
+    theorem (Theorem 1.11), for n-linear forms on dyadic test functions in R^d satisfying the
+    dyadic decay, perfect smoothness and qualitative truncation conditions. The development
+    follows the paper's proof of Theorem 1.4 (stopping times, pruning, the telescoping
+    identities, the discrete Carleson embedding and the outer-measure Hölder inequalities of
+    Do–Thiele, the contraction step and its iteration) and the global/local reduction of
+    Theorem 1.11, including the atom estimate for the dyadic Hardy norm for all exponents
+    (Burkholder's L^p bound for the dyadic square function by Marcinkiewicz interpolation).
+    Theorem 1.3, cited as folklore in the paper, is proved by a dyadic paraproduct argument
+    with a dyadic John–Nirenberg inequality for the paraproduct symbols. All constants
+    depend only on the dimension, the linearity, the testing constant and the exponents.
+  authors:
+    - "Stefanos Lappas"
+  license: "Apache-2.0"
+  responsible_maintainers:
+    - "Stefanos Lappas"
+
+classification:
+  arxiv: ["math.CA"]
+  msc2020: ["42B20", "42B25"]
+
+sources:
+  - title: "A local T(b) theorem for perfect multilinear Calderón–Zygmund operators"
+    authors:
+      - "Mariusz Mirek"
+      - "Christoph Thiele"
+    id: "doi:10.1112/plms.12000"
+    type: "article"
+    location: "Proceedings of the London Mathematical Society (3) 114 (2017), 35–59, https://doi.org/10.1112/plms.12000"
+    relationship: "formalizes"
+    note: >-
+      Theorems 1.4 and 1.11 and the supporting results of Section 2 (Theorem 2.68,
+      Lemmas 2.71, 2.72, the main estimate of Sections 2.2–2.8) are formalized following the
+      paper's proofs. Theorem 1.3 is stated in the paper without proof (cited as folklore);
+      the formalization supplies a proof by the dyadic paraproduct argument. The atom estimate
+      for the dyadic Hardy norm with exponents 1 < p < 2, needed in the global/local reduction
+      and not discussed in the paper, is proved as well.
+    license: "unknown"
+    author_endorsement: "not-contacted"
+  - title: "Lp theory for outer measures and two themes of Lennart Carleson united"
+    authors:
+      - "Yen Do"
+      - "Christoph Thiele"
+    type: "article"
+    location: "Bulletin of the American Mathematical Society 52 (2015), 249–296"
+    relationship: "background"
+    note: "Source of the outer-measure Hölder inequalities (Prop. 3.4) and Prop. 3.6 used in Section 2.9 of the formalized paper; formalized here as needed, for the sizes S_1, S_2, S_infinity on dyadic cubes."
+    license: "unknown"
+    author_endorsement: "not-contacted"
+  - title: "Carleson measures, trees, extrapolation, and T(b) theorems"
+    authors:
+      - "Pascal Auscher"
+      - "Steve Hofmann"
+      - "Camil Muscalu"
+      - "Terence Tao"
+      - "Christoph Thiele"
+    type: "article"
+    location: "Publicacions Matemàtiques 46 (2002), 257–325"
+    relationship: "background"
+    note: "Source of the global/local reduction used for Theorem 1.11 (page 38 of the formalized paper)."
+    license: "unknown"
+    author_endorsement: "not-contacted"
+
+related_formalizations: []
+
+status:
+  scope: >-
+    Formalized and proved: Theorem 1.3 (MirekThiele.theorem_1_3), Theorem 1.4 for every n and
+    k (MirekThiele.theorem_1_4) and Theorem 1.11 (MirekThiele.theorem_1_11), with the
+    definitions of Section 1 of the paper. Modelling choices: (a) the weak boundedness
+    condition (1.14) is taken in its scale-invariant form |Λ(b_1 1_Q, ..., b_n 1_Q)| ≤ B |Q|
+    where the paper writes ≤ B; (b) the dyadic Hardy norm in (1.15) is the L^1 norm of the
+    dyadic square function, and ‖·‖_∞ is the essential supremum; (c) the testing functions
+    b_{σ,Q,j} of Theorem 1.4 and the functions b_j of Theorem 1.11 are required to be dyadic
+    test functions, which the paper leaves implicit since the form is only defined on dyadic
+    test functions; (d) I_n is indexed by Fin n and the testing functions are indexed by the
+    position in the path; (e) Theorem 1.4 is stated with the hypotheses 1 ≤ k ≤ n inside the
+    statement, so that the paper's range k ≥ 1, n ≥ min(k, 2) is covered: the case n = 1 is
+    void because a Hölder tuple of finite exponents forces n ≥ 2, and k > n is vacuous.
+    Constants are shown to depend only on d, n, B and the exponents but are not tracked
+    explicitly.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: []
+  main_results:
+    - "MirekThiele.theorem_1_3 — Theorem 1.3, perfect multilinear local T(1) theorem"
+    - "MirekThiele.theorem_1_4 — Theorem 1.4, perfect multilinear local T(b) theorem"
+    - "MirekThiele.theorem_1_11 — Theorem 1.11, perfect multilinear global T(b) theorem"
+
+automation:
+  methods:
+    - method: "agent"
+      models: ["Claude (Anthropic), via Claude Code"]
+      framework: "Claude Code"
+      tool_setup: >-
+        AI-assisted: the Lean statements and proofs were written by an AI coding agent
+        (Claude Code) under step-by-step human direction, with every intermediate file
+        compiled against Mathlib and required to be free of errors, warnings, sorry and
+        axioms before the next step. The human author chose the blueprint structure, checked
+        the statements against the paper and decided the modelling choices listed under
+        status.scope and fidelity.divergences.
+      cost:
+        wall_time: "not tracked"
+        spend_usd: "subscription-based"
+        hardware: "local machine with a hosted model"
+      prompting_notes: >-
+        One proof component per prompt, following the paper's section structure (statements
+        first, then the analytic estimates, then the assembly), with the compile status of
+        the whole file as the acceptance criterion for each step.
+  spend_usd: "subscription-based"
+  notes: >-
+    Human-directed, AI-written formalization. The human author selected the paper, fixed the
+    order of work, reviewed the formal statements against the paper and resolved modelling
+    questions; the agent produced the Lean code and compiled it after each step.
+
+fidelity:
+  divergences: >-
+    (1) Weak boundedness (1.14) is required in the scale-invariant form
+    |Λ(b_1 1_Q, ..., b_n 1_Q)| ≤ B |Q| instead of the paper's ≤ B; the factor |Q| is the
+    dimensionally consistent normalization and is used in the global/local reduction.
+    (2) The dyadic Hardy norm of (1.15) is realized as the L^1 norm of the dyadic square
+    function (one of the standard equivalent norms); a different choice changes only the
+    constant. (3) The testing functions of Theorem 1.4 and the functions b_j of Theorem 1.11
+    are dyadic test functions (implicit in the paper). (4) Theorem 1.4 is stated with the
+    hypotheses 1 ≤ k ≤ n inside the statement; the paper's n ≥ min(k, 2) is covered, the
+    case n = 1 being void. (5) Theorem 1.3 has no proof in the paper; the proof given here is
+    the dyadic paraproduct argument with a dyadic John–Nirenberg inequality.
+
+review:
+  status: "self-assessed"
+  reviewers:
+    - "none"
+  notes: >-
+    The formal statements (Challenge.lean) were compared declaration by declaration with
+    Section 1 of the paper by the author. No independent mathematical review has been
+    performed yet.
+
+alignment:
+  namespace: "MirekThiele"
+  statements:
+    - source: "Theorem 1.3 (perfect multilinear local T(1) theorem)"
+      lean: "MirekThiele.theorem_1_3"
+      module: "Solution"
+      status: "proved"
+      note: "Statement MirekThiele.LocalT1 with the testing hypothesis MirekThiele.T1Testing; proof MirekThiele.localT1 in MirekThiele.T1Theorem."
+    - source: "Theorem 1.4 (perfect multilinear local T(b) theorem)"
+      lean: "MirekThiele.theorem_1_4"
+      module: "Solution"
+      status: "proved"
+      note: "Statement MirekThiele.LocalTb with hypotheses (1.5)–(1.9) as MirekThiele.LocalTbHypotheses, for all n and k; proof MirekThiele.localTb_all in MirekThiele.T1Theorem."
+    - source: "Theorem 1.11 (perfect multilinear global T(b) theorem)"
+      lean: "MirekThiele.theorem_1_11"
+      module: "Solution"
+      status: "proved"
+      note: "Statement MirekThiele.GlobalTb with hypotheses (1.12)–(1.15) as MirekThiele.GlobalTbHypotheses, (1.14) in scale-invariant form; proof MirekThiele.globalTb_all in MirekThiele.T1Theorem."
+    - source: "Theorem 2.68 (discrete Carleson embedding)"
+      lean: "MirekThiele.carlesonEmbedding"
+      module: "MirekThiele.Estimates"
+      status: "proved"
+      note: "For 1 < p < ∞, via the endpoint estimates and Marcinkiewicz interpolation for outer measure spaces (MirekThiele.marcinkiewicz)."
+    - source: "Lemma 2.71"
+      lean: "MirekThiele.lemma271"
+      module: "MirekThiele.Estimates"
+      status: "proved"
+      note: "With the explicit constant 32 C_p C_{p'}."
+    - source: "Lemma 2.72"
+      lean: "MirekThiele.lemma272"
+      module: "MirekThiele.Estimates"
+      status: "proved"
+      note: "Under the hypothesis 1/p + 1/q < 1 implicit in the paper's exponent (pq/(p+q))'; the endpoint case 1/p + 1/q = 1 is MirekThiele.lemma272one."
+    - source: "Sections 2.2–2.8, the main estimate A ≤ A θ + C (p. 43)"
+      lean: "MirekThiele.contractionStep"
+      module: "MirekThiele.T1Theorem"
+      status: "proved"
+      note: "The contraction step for every family of testing functions, with constants depending only on d, n, B and the exponents; iterated in MirekThiele.restrictedTesting."
