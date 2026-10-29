@@ -184,3 +184,10 @@ alignment:
       module: "MirekThiele.T1Theorem"
       status: "proved"
       note: "The contraction step for every family of testing functions, with constants depending only on d, n, B and the exponents; iterated in MirekThiele.restrictedTesting."
+
+acknowledgements: >-
+  This formalization was carried out at the Mathematical Institute of the University of Bonn.
+  The author thanks the Lean and Mathlib communities (leanprover-community) for the Lean 4
+  theorem prover and the Mathlib library, the Palomar Registry for the starter repository on
+  which the project layout is based, and Anthropic's Claude Code, which was used for the
+  AI-assisted development of the Lean code.
