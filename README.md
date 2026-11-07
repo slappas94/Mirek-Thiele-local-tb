@@ -23,21 +23,22 @@ tuple $`(p_j)_{j=1}^n`$ with $`1<p_j<\infty`$ and $`\sum_{j=1}^n 1/p_j=1`$.
 A *perfect Calderón–Zygmund form* is an $`n`$-linear form $`\Lambda`$ on $`n`$-tuples of dyadic
 test functions on $`\mathbb R^d`$ with the following three properties.
 
-1. **Dyadic decay.** If all $`f_j`$ are supported on a dyadic cube $`P`$ and two of them are
-   supported on different children of $`P`$, then, for every Hölder tuple,
+**(i) Dyadic decay.** If all $`f_j`$ are supported on a dyadic cube $`P`$ and two of them are
+supported on different children of $`P`$, then, for every Hölder tuple,
 
-   ```math
-   |\Lambda(f_1,\dots,f_n)|\le\prod_{j=1}^n\|f_j\|_{p_j}.
-   ```
+```math
+|\Lambda(f_1,\dots,f_n)|\le\prod_{j=1}^n\|f_j\|_{p_j}.
+```
 
-2. **Perfect smoothness.** If some $`f_i`$ is supported on a dyadic cube $`P`$ and has mean
-   zero, and some $`f_j`$ with $`j\ne i`$ vanishes on $`P`$, then $`\Lambda(f_1,\dots,f_n)=0`$.
-3. **Qualitative truncation.** For a kernel $`K`$ that is a dyadic test function on
-   $`\mathbb R^{dn}`$,
+**(ii) Perfect smoothness.** If some $`f_i`$ is supported on a dyadic cube $`P`$ and has mean
+zero, and some $`f_j`$ with $`j\ne i`$ vanishes on $`P`$, then $`\Lambda(f_1,\dots,f_n)=0`$.
 
-   ```math
-   \Lambda(f_1,\dots,f_n)=\int_{\mathbb R^{dn}}K(x)\prod_{j=1}^n f_j(x_j)\,dx .
-   ```
+**(iii) Qualitative truncation.** For a kernel $`K`$ that is a dyadic test function on
+$`\mathbb R^{dn}`$,
+
+```math
+\Lambda(f_1,\dots,f_n)=\int_{\mathbb R^{dn}}K(x)\prod_{j=1}^n f_j(x_j)\,dx .
+```
 
 Fix a Hölder tuple $`(p_j)`$. In all three theorems the constant $`C`$ depends only on $`d`$,
 $`n`$, $`B`$ and $`(p_j)`$, and not on the form $`\Lambda`$ or on the testing functions.
@@ -84,22 +85,23 @@ $`\Sigma`$ an admissible collection. Suppose that for each path $`\sigma\in\Sigm
 $`k`$, each $`\sigma`$-nested tuple $`\mathbf Q`$ and each $`j\in\sigma(I_{k-1})`$ a dyadic test
 function $`b_{\sigma,\mathbf Q,j}`$ is given such that
 
-* **(1.5) support:** $`\operatorname{supp}b_{\sigma,\mathbf Q,j}\subseteq Q_j`$;
+* **(1.5) support:** $`\mathrm{supp}\,b_{\sigma,\mathbf Q,j}\subseteq Q_j`$;
 * **(1.6) mean:** $`\int b_{\sigma,\mathbf Q,j}=|Q_j|`$;
 * **(1.7) norm bound:** $`\int|b_{\sigma,\mathbf Q,j}|^{p_j}\le B\,|Q_j|`$;
 * **(1.8) interdependence:** for paths $`\sigma,\sigma'\in\Sigma`$ of length $`k`$, a
   $`\sigma`$-nested $`\mathbf Q`$, a $`\sigma'`$-nested $`\mathbf Q'`$ and $`l<k`$, if
   $`\sigma(i)=\sigma'(i)`$ and $`Q_{\sigma(i)}=Q'_{\sigma'(i)}`$ for all $`i\le l`$, then
   $`b_{\sigma,\mathbf Q,\sigma(l)}=b_{\sigma',\mathbf Q',\sigma'(l)}`$;
-* **(1.9) testing:** for every dyadic test function $`g`$ supported on $`Q_{\sigma(k)}`$,
 
-  ```math
-  |\Lambda(f_1,\dots,f_n)|\le B\prod_{j=1}^n\|f_j\|_{p_j},
-  \qquad
-  f_{\sigma(k)}=g,\quad
-  f_{\sigma(l)}=\mathbb 1_{Q_{\sigma(k)}}\,b_{\sigma,\mathbf Q,\sigma(l)}\ (l<k),\quad
-  f_s=\mathbb 1_{Q_{\sigma(k)}}\ (s\notin\sigma(I_k)).
-  ```
+**(1.9) testing:** for every dyadic test function $`g`$ supported on $`Q_{\sigma(k)}`$,
+
+```math
+|\Lambda(f_1,\dots,f_n)|\le B\prod_{j=1}^n\|f_j\|_{p_j},
+\qquad
+f_{\sigma(k)}=g,\quad
+f_{\sigma(l)}=\mathbb 1_{Q_{\sigma(k)}}\,b_{\sigma,\mathbf Q,\sigma(l)}\ (l<k),\quad
+f_s=\mathbb 1_{Q_{\sigma(k)}}\ (s\notin\sigma(I_k)).
+```
 
 Then
 
