@@ -57,6 +57,9 @@ namespace DyadicCube
 
 variable {d : ℕ}
 
+/-- The side length `ℓ(P) = 2^m`. -/
+noncomputable def side (P : DyadicCube d) : ℝ := (2 : ℝ) ^ P.m
+
 /-- The cube as a subset of `ℝ^d = (Fin d → ℝ)`. -/
 def toSet (P : DyadicCube d) : Set (Fin d → ℝ) :=
   {x | ∀ i, (2 : ℝ) ^ P.m * P.l i ≤ x i ∧ x i < (2 : ℝ) ^ P.m * (P.l i + 1)}
@@ -196,7 +199,7 @@ path has full length `n`, `Q_{σ(n-1)} = Q_{σ(n)}`. -/
 structure Nested (σ : IPath n (k + 1)) (Q : Fin n → DyadicCube d) : Prop where
   mono : ∀ i j : Fin (k + 1), i < j → (Q (σ j)).toSet ⊆ (Q (σ i)).toSet
   outside : ∀ s : Fin n, s ∉ Set.range σ → Q s = Q (σ (Fin.last k))
-  top : k + 1 = n → ∀ _ : 1 ≤ k, Q (σ ⟨k - 1, by omega⟩) = Q (σ (Fin.last k))
+  top : k + 1 = n → ∀ _ : 1 ≤ k, Q (σ ⟨k - 1, Nat.lt_of_le_of_lt (Nat.sub_le k 1) (Nat.lt_add_one k)⟩) = Q (σ (Fin.last k))
 
 end IPath
 
