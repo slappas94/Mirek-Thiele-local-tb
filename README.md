@@ -60,11 +60,3 @@ warnings are the three deliberate `sorry`s of `Challenge.lean`, and `#print axio
 theorems of `Solution.lean` reports exactly `propext`, `Classical.choice` and `Quot.sound`.
 `lake comparator` has not been run locally (it needs the Linux `bwrap` sandbox); Palomar runs it
 during verification.
-
-## Submitting to Palomar
-
-1. Build locally and run `./scripts/verify-comparator.sh` style checks as described in the
-   Palomar starter repository (`lake comparator`).
-2. Push to a public GitHub repository and copy the full 40-character commit SHA.
-3. Open the Palomar submission form, enter the repository and commit, leave the path fields
-   blank (root layout), and state your relationship to the formalization.
