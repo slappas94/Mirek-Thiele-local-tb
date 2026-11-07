@@ -97,11 +97,11 @@ function $`b_{\sigma,\mathbf Q,j}`$ is given such that
 
 ```math
 |\Lambda(f_1,\dots,f_n)|\le B\prod_{j=1}^n\|f_j\|_{p_j},
-\qquad
-f_{\sigma(k)}=g,\quad
-f_{\sigma(l)}=\mathbb 1_{Q_{\sigma(k)}}\,b_{\sigma,\mathbf Q,\sigma(l)}\ (l<k),\quad
-f_s=\mathbb 1_{Q_{\sigma(k)}}\ (s\notin\sigma(I_k)).
 ```
+
+where $`f_{\sigma(k)}=g`$, $`f_{\sigma(l)}=\mathbb 1_{Q_{\sigma(k)}}\,b_{\sigma,\mathbf Q,\sigma(l)}`$
+for $`l<k`$, and $`f_s=\mathbb 1_{Q_{\sigma(k)}}`$ for every $`s`$ outside the range of
+$`\sigma`$.
 
 Then
 
@@ -121,16 +121,13 @@ Let $`B\ge 1`$, let $`\Lambda`$ be a perfect Calderón–Zygmund form, and let
 $`b_1,\dots,b_n`$ be dyadic test functions such that, for all dyadic cubes $`Q`$ and all
 $`j`$,
 
-```math
-\begin{aligned}
-&|[b_j]_Q|\ge 1, &&\text{(1.12) pseudo-accretivity}\\
-&\|b_j\|_{L^\infty}\le B, &&\text{(1.13) norm bound}\\
-&|\Lambda(b_1\mathbb 1_Q,\dots,b_n\mathbb 1_Q)|\le B\,|Q|, &&\text{(1.14) weak boundedness}\\
-&|\Lambda(b_1,\dots,b_{j-1},g,b_{j+1},\dots,b_n)|\le B\,\|g\|_{H^1}\ \text{for all dyadic test functions } g, &&\text{(1.15) BMO condition}
-\end{aligned}
-```
+* **(1.12) pseudo-accretivity:** $`|[b_j]_Q|\ge 1`$;
+* **(1.13) norm bound:** $`\|b_j\|_{L^\infty}\le B`$;
+* **(1.14) weak boundedness:** $`|\Lambda(b_1\mathbb 1_Q,\dots,b_n\mathbb 1_Q)|\le B\,|Q|`$;
+* **(1.15) BMO condition:** for every dyadic test function $`g`$,
+  $`|\Lambda(b_1,\dots,b_{j-1},g,b_{j+1},\dots,b_n)|\le B\,\|g\|_{H^1}`$.
 
-where $`\|g\|_{H^1}=\int_{\mathbb R^d}Sg`$ is the dyadic Hardy norm, defined by the dyadic square
+Here $`\|g\|_{H^1}=\int_{\mathbb R^d}Sg`$ is the dyadic Hardy norm, defined by the dyadic square
 function
 
 ```math
