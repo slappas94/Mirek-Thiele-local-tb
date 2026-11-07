@@ -229,11 +229,11 @@ build directory nests deeply.
 
 ## Status of this snapshot
 
-The development was written and checked as a single file against the live Lean web editor
-(Lean 4.36.0-rc2, Mathlib master of 29 October 2026), where it compiles with no errors and no
-warnings. For this repository it is pinned to the Mathlib `v4.35.0` release instead, which needed
-only the older names of a few `ENNReal` summation lemmas and one rewritten subset argument; the
-mathematics is unchanged. It was split into four modules under the 10,000-line cap and ported
+This repository is pinned to Lean `v4.35.0` and the Mathlib `v4.35.0` release (see Building).
+The development was first written and checked as a single file on the live Lean web editor, which
+uses a newer Mathlib; pinning it to the `v4.35.0` release needed only the older names of a few
+`ENNReal` summation lemmas and one rewritten subset argument, and the mathematics is unchanged.
+For this repository it was split into four modules under the 10,000-line cap and ported
 to the module system (`module`, `public import`, `@[expose] public section`); the split was done
 mechanically at section boundaries, re-declaring the enclosing `namespace`, `section`, `open` and
 `variable` context at the top of each module. The resulting project was built locally with the
