@@ -3205,7 +3205,7 @@ theorem outerMeasure_badTrees_le (hf : Integrable f volume) {lam : ℝ} (hlam : 
   · intro P hP
     obtain ⟨Q, hQ, hPQ⟩ := hP
     exact Set.mem_biUnion hQ hPQ
-  · rw [tsum_eq_iSup_sum]
+  · rw [ENNReal.tsum_eq_iSup_sum]
     refine iSup_le fun s => ?_
     rw [← ENNReal.ofReal_sum_of_nonneg fun Q _ => (DyadicCube.vol_pos _).le]
     apply ENNReal.ofReal_le_ofReal
@@ -3580,7 +3580,7 @@ theorem sizeInf_add (F G : DyadicCube d → ℝ) (T : DyadicCube d) :
 theorem sizeP_mono {p : ℝ} (hp : 0 ≤ p) {F G : DyadicCube d → ℝ} (h : ∀ Q, ‖F Q‖ₑ ≤ ‖G Q‖ₑ)
     (T : DyadicCube d) : sizeP p F T ≤ sizeP p G T := by
   simp only [sizeP]
-  refine ENNReal.rpow_le_rpow (mul_le_mul' le_rfl (tsum_le_tsum fun Q => ?_))
+  refine ENNReal.rpow_le_rpow (mul_le_mul' le_rfl (ENNReal.tsum_le_tsum fun Q => ?_))
     (one_div_nonneg.mpr hp)
   exact mul_le_mul' (ENNReal.rpow_le_rpow (h Q) hp) le_rfl
 
@@ -3761,7 +3761,7 @@ theorem outerMeasure_union_le (A B : Set (DyadicCube d)) :
   simp only [outerMeasure]
   refine le_iInf₂_add_iInf₂ fun C₁ h₁ C₂ h₂ => ?_
   refine (iInf₂_le (C₁ ∪ C₂) ?_).trans
-    (tsum_union_le (fun T : DyadicCube d => ENNReal.ofReal T.vol) C₁ C₂)
+    (ENNReal.tsum_union_le (fun T : DyadicCube d => ENNReal.ofReal T.vol) C₁ C₂)
   intro P hP
   rcases hP with hP | hP
   · obtain ⟨T, hT, hPT⟩ := Set.mem_iUnion₂.mp (h₁ hP)
@@ -4554,8 +4554,8 @@ theorem enorm_le_of_notMem_admissible {F : DyadicCube d → ℝ} {G : Set (Dyadi
     ‖F Q‖ₑ ≤ ENNReal.ofReal lam := by
   have h1 : ‖F Q‖ₑ * ENNReal.ofReal Q.vol ≤
       ∑' P : Q.tree, ‖Gᶜ.indicator F P‖ₑ * ENNReal.ofReal (P : DyadicCube d).vol := by
-    have := le_tsum
-      (fun P : Q.tree => ‖Gᶜ.indicator F P‖ₑ * ENNReal.ofReal (P : DyadicCube d).vol)
+    have := ENNReal.le_tsum
+      (f := fun P : Q.tree => ‖Gᶜ.indicator F P‖ₑ * ENNReal.ofReal (P : DyadicCube d).vol)
       ⟨Q, DyadicCube.mem_tree.mpr Set.Subset.rfl⟩
     simpa [Set.indicator_of_mem (show Q ∈ Gᶜ from hQ)] using this
   rw [tsum_tree_eq_vol_mul_sizeP_one] at h1
@@ -4613,7 +4613,7 @@ theorem tsum_enorm_mul_vol_le (F : DyadicCube d → ℝ) :
   have hlayer : ∑' k : ℤ, ENNReal.ofReal ((2 : ℝ) ^ (k - 1)) * superlevel (sizeP 1) F ((2 : ℝ) ^ k)
       ≤ ∫⁻ lam in Set.Ioi (0 : ℝ), superlevel (sizeP 1) F lam := by
     rw [hU, lintegral_iUnion (fun _ => measurableSet_Ioc) hdisj]
-    refine tsum_le_tsum fun k => ?_
+    refine ENNReal.tsum_le_tsum fun k => ?_
     calc ENNReal.ofReal ((2 : ℝ) ^ (k - 1)) * superlevel (sizeP 1) F ((2 : ℝ) ^ k)
         = ∫⁻ _ in Set.Ioc ((2 : ℝ) ^ (k - 1)) ((2 : ℝ) ^ k),
             superlevel (sizeP 1) F ((2 : ℝ) ^ k) := by
@@ -4629,7 +4629,7 @@ theorem tsum_enorm_mul_vol_le (F : DyadicCube d → ℝ) :
     apply hint
     have h1 : ENNReal.ofReal ((2 : ℝ) ^ (k - 1)) * superlevel (sizeP 1) F ((2 : ℝ) ^ k) = ⊤ := by
       rw [hk, ENNReal.mul_top (ENNReal.ofReal_pos.mpr (zpow_pos (by norm_num) _)).ne']
-    have h2 := (le_tsum _ k).trans hlayer
+    have h2 := (ENNReal.le_tsum k).trans hlayer
     rw [h1] at h2
     exact top_le_iff.mp h2
   refine ENNReal.le_of_forall_pos_le_add fun ε hε _ => ?_
@@ -4684,11 +4684,11 @@ theorem tsum_enorm_mul_vol_le (F : DyadicCube d → ℝ) :
       have h2 : ∑' _ : ℕ, ENNReal.ofReal Q.vol / 2 * ENNReal.ofReal ((2 : ℝ) ^ (-1 : ℤ)) ≤
           ∑' n : ℕ, ENNReal.ofReal ((2 : ℝ) ^ ((n : ℤ) - 1)) *
             superlevel (sizeP 1) F ((2 : ℝ) ^ (n : ℤ)) := by
-        refine tsum_le_tsum fun n => ?_
+        refine ENNReal.tsum_le_tsum fun n => ?_
         rw [mul_comm]
         exact mul_le_mul' (ENNReal.ofReal_le_ofReal (zpow_le_zpow_right₀ (by norm_num) (by omega)))
           (h n)
-      have h3 := tsum_comp_le_tsum_of_injective (Nat.cast_injective (R := ℤ))
+      have h3 := ENNReal.tsum_comp_le_tsum_of_injective (Nat.cast_injective (R := ℤ))
         (fun k : ℤ => ENNReal.ofReal ((2 : ℝ) ^ (k - 1)) * superlevel (sizeP 1) F ((2 : ℝ) ^ k))
       have h4 := h2.trans (h3.trans hlayer)
       rw [h1] at h4
@@ -4697,7 +4697,7 @@ theorem tsum_enorm_mul_vol_le (F : DyadicCube d → ℝ) :
     -- the error terms become smaller than `|Q|/2`
     have hεk : ∃ k₁ : ℤ, ∀ k, k₁ ≤ k →
         (ε' k : ENNReal) * ENNReal.ofReal ((2 : ℝ) ^ (-(k + 1))) < ENNReal.ofReal Q.vol / 2 := by
-      have hεle : ∀ k, (ε' k : ENNReal) ≤ ε := fun k => (le_tsum _ k).trans hε'sum.le
+      have hεle : ∀ k, (ε' k : ENNReal) ≤ ε := fun k => (ENNReal.le_tsum k).trans hε'sum.le
       have hε0 : (0 : ℝ) < ε := hε
       obtain ⟨n, hn⟩ := exists_pow_lt_of_lt_one (div_pos (half_pos hvol) hε0)
         (by norm_num : (1 / 2 : ℝ) < 1)
@@ -4723,7 +4723,7 @@ theorem tsum_enorm_mul_vol_le (F : DyadicCube d → ℝ) :
       obtain ⟨T, hT, hQT⟩ := Set.mem_iUnion₂.mp (hC k hQk)
       have h1 : ENNReal.ofReal Q.vol ≤ ∑' T : C k, ENNReal.ofReal (T : DyadicCube d).vol :=
         (ENNReal.ofReal_le_ofReal (DyadicCube.vol_le_of_subset hQT)).trans
-          (le_tsum (fun T : C k => ENNReal.ofReal (T : DyadicCube d).vol) ⟨T, hT⟩)
+          (ENNReal.le_tsum (f := fun T : C k => ENNReal.ofReal (T : DyadicCube d).vol) ⟨T, hT⟩)
       have h2 : superlevel (sizeP 1) F ((2 : ℝ) ^ k) < ENNReal.ofReal Q.vol / 2 :=
         lt_of_le_of_lt (superlevel_anti _ _
           (zpow_le_zpow_right₀ (by norm_num) (le_of_max_le_left hk))) hk₀
@@ -4755,8 +4755,8 @@ theorem tsum_enorm_mul_vol_le (F : DyadicCube d → ℝ) :
       calc ‖F Q‖ₑ * ENNReal.ofReal Q.vol
           = (E k \ E (k + 1)).indicator (fun Q => ‖F Q‖ₑ * ENNReal.ofReal Q.vol) Q :=
             (Set.indicator_of_mem hk (fun Q => ‖F Q‖ₑ * ENNReal.ofReal Q.vol)).symm
-        _ ≤ _ := le_tsum
-            (fun k : ℤ => (E k \ E (k + 1)).indicator
+        _ ≤ _ := ENNReal.le_tsum
+            (f := fun k : ℤ => (E k \ E (k + 1)).indicator
               (fun Q => ‖F Q‖ₑ * ENNReal.ofReal Q.vol) Q) k
   have hlevel_le : ∀ k : ℤ,
       ∑' Q : DyadicCube d, (E k \ E (k + 1)).indicator (fun Q => ‖F Q‖ₑ * ENNReal.ofReal Q.vol) Q ≤
@@ -4765,22 +4765,22 @@ theorem tsum_enorm_mul_vol_le (F : DyadicCube d → ℝ) :
     calc ∑' Q : DyadicCube d, (E k \ E (k + 1)).indicator (fun Q => ‖F Q‖ₑ * ENNReal.ofReal Q.vol) Q
         ≤ ∑' Q : DyadicCube d, ∑' T : C k, ((T : DyadicCube d).tree \ E (k + 1)).indicator
             (fun Q => ‖F Q‖ₑ * ENNReal.ofReal Q.vol) Q := by
-          refine tsum_le_tsum fun Q => ?_
+          refine ENNReal.tsum_le_tsum fun Q => ?_
           by_cases hQ : Q ∈ E k \ E (k + 1)
           · obtain ⟨T, hT, hQT⟩ := Set.mem_iUnion₂.mp (hC k hQ.1)
             calc (E k \ E (k + 1)).indicator (fun Q => ‖F Q‖ₑ * ENNReal.ofReal Q.vol) Q
                 = (T.tree \ E (k + 1)).indicator (fun Q => ‖F Q‖ₑ * ENNReal.ofReal Q.vol) Q := by
                   rw [Set.indicator_of_mem hQ,
                     Set.indicator_of_mem (show Q ∈ T.tree \ E (k + 1) from ⟨hQT, hQ.2⟩)]
-              _ ≤ _ := le_tsum
-                  (fun T : C k => ((T : DyadicCube d).tree \ E (k + 1)).indicator
+              _ ≤ _ := ENNReal.le_tsum
+                  (f := fun T : C k => ((T : DyadicCube d).tree \ E (k + 1)).indicator
                     (fun Q => ‖F Q‖ₑ * ENNReal.ofReal Q.vol) Q) ⟨T, hT⟩
           · rw [Set.indicator_of_notMem hQ]
             exact zero_le
       _ = ∑' T : C k, ∑' Q : DyadicCube d, ((T : DyadicCube d).tree \ E (k + 1)).indicator
-            (fun Q => ‖F Q‖ₑ * ENNReal.ofReal Q.vol) Q := tsum_comm
+            (fun Q => ‖F Q‖ₑ * ENNReal.ofReal Q.vol) Q := ENNReal.tsum_comm
       _ ≤ ∑' T : C k, ENNReal.ofReal (T : DyadicCube d).vol * ENNReal.ofReal ((2 : ℝ) ^ (k + 1)) := by
-          refine tsum_le_tsum fun T => ?_
+          refine ENNReal.tsum_le_tsum fun T => ?_
           rw [tsum_indicator_tree_eq]
           exact mul_le_mul' le_rfl (hE (k + 1) T)
       _ = ENNReal.ofReal ((2 : ℝ) ^ (k + 1)) * ∑' T : C k, ENNReal.ofReal (T : DyadicCube d).vol := by
@@ -4802,14 +4802,14 @@ theorem tsum_enorm_mul_vol_le (F : DyadicCube d → ℝ) :
   calc ∑' Q : DyadicCube d, ‖F Q‖ₑ * ENNReal.ofReal Q.vol
       ≤ ∑' Q : DyadicCube d, ∑' k : ℤ,
           (E k \ E (k + 1)).indicator (fun Q => ‖F Q‖ₑ * ENNReal.ofReal Q.vol) Q :=
-        tsum_le_tsum hf_le
+        ENNReal.tsum_le_tsum hf_le
     _ = ∑' k : ℤ, ∑' Q : DyadicCube d,
           (E k \ E (k + 1)).indicator (fun Q => ‖F Q‖ₑ * ENNReal.ofReal Q.vol) Q :=
-        tsum_comm
+        ENNReal.tsum_comm
     _ ≤ ∑' k : ℤ, (ENNReal.ofReal ((2 : ℝ) ^ (k + 1)) * superlevel (sizeP 1) F ((2 : ℝ) ^ k) +
-          ε' k) := tsum_le_tsum hlevel_le
+          ε' k) := ENNReal.tsum_le_tsum hlevel_le
     _ = ∑' k : ℤ, ENNReal.ofReal ((2 : ℝ) ^ (k + 1)) * superlevel (sizeP 1) F ((2 : ℝ) ^ k) +
-          ∑' k : ℤ, (ε' k : ENNReal) := tsum_add
+          ∑' k : ℤ, (ε' k : ENNReal) := ENNReal.tsum_add
     _ ≤ 4 * (∫⁻ lam in Set.Ioi (0 : ℝ), superlevel (sizeP 1) F lam) + ε := by
         refine add_le_add ?_ hε'sum.le
         calc ∑' k : ℤ, ENNReal.ofReal ((2 : ℝ) ^ (k + 1)) * superlevel (sizeP 1) F ((2 : ℝ) ^ k)
@@ -4947,7 +4947,7 @@ theorem sizeP_one_mul_le_sizeInf (F G : DyadicCube d → ℝ) (T : DyadicCube d)
   rw [mul_left_comm]
   refine mul_le_mul' le_rfl ?_
   rw [← ENNReal.tsum_mul_left]
-  refine tsum_le_tsum fun Q => ?_
+  refine ENNReal.tsum_le_tsum fun Q => ?_
   rw [Pi.mul_apply, enorm_mul, mul_assoc]
   exact mul_le_mul' (le_iSup (fun Q : T.tree => ‖F Q‖ₑ) Q) le_rfl
 
@@ -5144,10 +5144,10 @@ theorem lemma271 (hd : d ≠ 0) (p p' : ℝ) : Lemma271 d p p' := by
   calc ∑' T : R.tree, ‖α T‖ₑ
       ≤ ∑' T : R.tree, ENNReal.ofReal C₀ *
           ((‖A T‖ₑ + ‖B T‖ₑ + ‖Cf T‖ₑ + ‖D T‖ₑ) * ENNReal.ofReal (T : DyadicCube d).vol) :=
-        tsum_le_tsum hpt
+        ENNReal.tsum_le_tsum hpt
     _ ≤ ∑' T : DyadicCube d, ENNReal.ofReal C₀ *
           ((‖A T‖ₑ + ‖B T‖ₑ + ‖Cf T‖ₑ + ‖D T‖ₑ) * ENNReal.ofReal T.vol) :=
-        tsum_comp_le_tsum_of_injective Subtype.val_injective
+        ENNReal.tsum_comp_le_tsum_of_injective Subtype.val_injective
           (fun T : DyadicCube d => ENNReal.ofReal C₀ *
             ((‖A T‖ₑ + ‖B T‖ₑ + ‖Cf T‖ₑ + ‖D T‖ₑ) * ENNReal.ofReal T.vol))
     _ = ENNReal.ofReal C₀ * (∑' T : DyadicCube d, ‖A T‖ₑ * ENNReal.ofReal T.vol +
@@ -5157,7 +5157,7 @@ theorem lemma271 (hd : d ≠ 0) (p p' : ℝ) : Lemma271 d p p' := by
         rw [ENNReal.tsum_mul_left]
         congr 1
         simp only [add_mul]
-        rw [tsum_add, tsum_add, tsum_add]
+        rw [ENNReal.tsum_add, ENNReal.tsum_add, ENNReal.tsum_add]
     _ ≤ ENNReal.ofReal C₀ * (4 * outerLpNorm (sizeP 1) 1 A + 4 * outerLpNorm (sizeP 1) 1 B +
           4 * outerLpNorm (sizeP 1) 1 Cf + 4 * outerLpNorm (sizeP 1) 1 D) := by
         gcongr <;> exact tsum_enorm_mul_vol_le _
@@ -5438,11 +5438,11 @@ theorem lemma272 (hd : d ≠ 0) (p q : ℝ) : Lemma272 d p q := by
       ≤ ∑' T : R.tree, ENNReal.ofReal C₀ *
           ((‖(A * G₃) T‖ₑ + ‖(B * G₃) T‖ₑ + ‖(Cf * G₃) T‖ₑ + ‖(D * G₃) T‖ₑ) *
             ENNReal.ofReal (T : DyadicCube d).vol) :=
-        tsum_le_tsum hpt
+        ENNReal.tsum_le_tsum hpt
     _ ≤ ∑' T : DyadicCube d, ENNReal.ofReal C₀ *
           ((‖(A * G₃) T‖ₑ + ‖(B * G₃) T‖ₑ + ‖(Cf * G₃) T‖ₑ + ‖(D * G₃) T‖ₑ) *
             ENNReal.ofReal T.vol) :=
-        tsum_comp_le_tsum_of_injective Subtype.val_injective
+        ENNReal.tsum_comp_le_tsum_of_injective Subtype.val_injective
           (fun T : DyadicCube d => ENNReal.ofReal C₀ *
             ((‖(A * G₃) T‖ₑ + ‖(B * G₃) T‖ₑ + ‖(Cf * G₃) T‖ₑ + ‖(D * G₃) T‖ₑ) *
               ENNReal.ofReal T.vol))
@@ -5453,7 +5453,7 @@ theorem lemma272 (hd : d ≠ 0) (p q : ℝ) : Lemma272 d p q := by
         rw [ENNReal.tsum_mul_left]
         congr 1
         simp only [add_mul]
-        rw [tsum_add, tsum_add, tsum_add]
+        rw [ENNReal.tsum_add, ENNReal.tsum_add, ENNReal.tsum_add]
     _ ≤ ENNReal.ofReal C₀ * (4 * outerLpNorm (sizeP 1) 1 (A * G₃) +
           4 * outerLpNorm (sizeP 1) 1 (B * G₃) + 4 * outerLpNorm (sizeP 1) 1 (Cf * G₃) +
           4 * outerLpNorm (sizeP 1) 1 (D * G₃)) := by
@@ -5654,10 +5654,10 @@ theorem lemma272one (hd : d ≠ 0) (p q : ℝ) : Lemma272one d p q := by
   calc ∑' T : R.tree, ‖α T‖ₑ
       ≤ ∑' T : R.tree, ENNReal.ofReal C₀ *
           ((‖A T‖ₑ + ‖B T‖ₑ + ‖Cf T‖ₑ + ‖D T‖ₑ) * ENNReal.ofReal (T : DyadicCube d).vol) :=
-        tsum_le_tsum hpt
+        ENNReal.tsum_le_tsum hpt
     _ ≤ ∑' T : DyadicCube d, ENNReal.ofReal C₀ *
           ((‖A T‖ₑ + ‖B T‖ₑ + ‖Cf T‖ₑ + ‖D T‖ₑ) * ENNReal.ofReal T.vol) :=
-        tsum_comp_le_tsum_of_injective Subtype.val_injective
+        ENNReal.tsum_comp_le_tsum_of_injective Subtype.val_injective
           (fun T : DyadicCube d => ENNReal.ofReal C₀ *
             ((‖A T‖ₑ + ‖B T‖ₑ + ‖Cf T‖ₑ + ‖D T‖ₑ) * ENNReal.ofReal T.vol))
     _ = ENNReal.ofReal C₀ * (∑' T : DyadicCube d, ‖A T‖ₑ * ENNReal.ofReal T.vol +
@@ -5667,7 +5667,7 @@ theorem lemma272one (hd : d ≠ 0) (p q : ℝ) : Lemma272one d p q := by
         rw [ENNReal.tsum_mul_left]
         congr 1
         simp only [add_mul]
-        rw [tsum_add, tsum_add, tsum_add]
+        rw [ENNReal.tsum_add, ENNReal.tsum_add, ENNReal.tsum_add]
     _ ≤ ENNReal.ofReal C₀ * (4 * outerLpNorm (sizeP 1) 1 A + 4 * outerLpNorm (sizeP 1) 1 B +
           4 * outerLpNorm (sizeP 1) 1 Cf + 4 * outerLpNorm (sizeP 1) 1 D) := by
         gcongr <;> exact tsum_enorm_mul_vol_le _

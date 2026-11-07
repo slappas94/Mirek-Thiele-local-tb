@@ -222,8 +222,8 @@ lake exe cache get
 lake build
 ```
 
-The toolchain is `leanprover/lean4:v4.36.0-rc2` with Mathlib pinned to the master commit
-`237c53b714060dd21b54c29e7e3256ec0c65f132` of 29 October 2026 (`lake-manifest.json` is
+The toolchain is `leanprover/lean4:v4.35.0` with Mathlib pinned to its `v4.35.0` release of
+13 October 2026, commit `56a005855ea17e0b0958f73ec801ae140b0a1679` (`lake-manifest.json` is
 committed). Budget several GiB for the Mathlib cache. On Windows, clone into a short path; the
 build directory nests deeply.
 
@@ -231,7 +231,9 @@ build directory nests deeply.
 
 The development was written and checked as a single file against the live Lean web editor
 (Lean 4.36.0-rc2, Mathlib master of 29 October 2026), where it compiles with no errors and no
-warnings. For this repository it was split into four modules under the 10,000-line cap and ported
+warnings. For this repository it is pinned to the Mathlib `v4.35.0` release instead, which needed
+only the older names of a few `ENNReal` summation lemmas and one rewritten subset argument; the
+mathematics is unchanged. It was split into four modules under the 10,000-line cap and ported
 to the module system (`module`, `public import`, `@[expose] public section`); the split was done
 mechanically at section boundaries, re-declaring the enclosing `namespace`, `section`, `open` and
 `variable` context at the top of each module. The resulting project was built locally with the

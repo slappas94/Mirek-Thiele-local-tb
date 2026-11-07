@@ -1694,7 +1694,7 @@ theorem lintegral_sqrt_sqFun_rpow_le (hd : d ≠ 0) {Q : DyadicCube d} {N : ℕ}
               rw [Real.enorm_eq_ofReal_abs, ← hb_def, hb0, ENNReal.ofReal_zero]
             rw [hx0, zero_pow two_ne_zero, mul_zero, ENNReal.zero_rpow_of_pos hp0, mul_zero]
           · have hbpos : 0 < b := lt_of_le_of_ne hb (Ne.symm hb0)
-            rw [Set.inter_eq_left.mpr (fun t (ht : t ∈ Set.Ici b) => hbpos.trans_le ht),
+            rw [Set.inter_eq_left.mpr (Set.Ici_subset_Ioi.mpr hbpos),
               ← Measure.restrict_congr_set Ioi_ae_eq_Ici]
             have hint : IntegrableOn (fun t : ℝ => 4 * t ^ (p - 3)) (Set.Ioi b) volume :=
               (integrableOn_Ioi_rpow_of_lt (by linarith) hbpos).const_mul 4
@@ -2277,7 +2277,7 @@ theorem enorm_le_sizeP {p : ℝ} (hp : 0 < p) (F : DyadicCube d → ℝ) (T : Dy
                 ← ENNReal.ofReal_mul (inv_nonneg.mpr T.vol_pos.le), inv_mul_cancel₀ T.vol_pos.ne',
                 ENNReal.ofReal_one, one_mul]
           _ ≤ _ := mul_le_mul' le_rfl
-              (le_tsum (fun Q : T.tree => ‖F Q‖ₑ ^ p * ENNReal.ofReal (Q : DyadicCube d).vol)
+              (ENNReal.le_tsum (f := fun Q : T.tree => ‖F Q‖ₑ ^ p * ENNReal.ofReal (Q : DyadicCube d).vol)
                 (⟨T, hT⟩ : T.tree))
 
 /-- **The `S_∞`-superlevel measure is at most the `S_p` one**: an exceptional set for `S_p` is one
@@ -2565,7 +2565,7 @@ theorem sum_block_le (hd : d ≠ 0) {p : HolderTuple n} {B : ℝ}
       _ ≤ ENNReal.ofReal (B * 2 ^ (d * n) * 2 ^ (d * n)) *
             ∑' Q : DyadicCube d, ‖F Q‖ₑ * ENNReal.ofReal Q.vol := by
           rw [← Finset.mul_sum]
-          exact mul_le_mul' le_rfl (sum_le_tsum _)
+          exact mul_le_mul' le_rfl (ENNReal.sum_le_tsum _)
       _ ≤ _ := mul_le_mul' le_rfl (tsum_enorm_mul_vol_le F)
   -- monotonicity of the sizes and the Carleson bounds
   have hS₂ : ∀ F G : DyadicCube d → ℝ, ∀ T, (∀ Q, ‖F Q‖ₑ ≤ ‖G Q‖ₑ) → sizeP 2 F T ≤ sizeP 2 G T :=
@@ -3904,7 +3904,7 @@ theorem sum_para_le (hd : d ≠ 0) {p : HolderTuple n} {B : ℝ} (hB : 1 ≤ B) 
           refine Finset.sum_congr rfl fun Q _ => ?_
           rw [mul_comm, ENNReal.ofReal_mul (hFnn Q), Real.enorm_eq_ofReal_abs,
             abs_of_nonneg (hFnn Q)]
-      _ ≤ ∑' Q : DyadicCube d, ‖F Q‖ₑ * ENNReal.ofReal Q.vol := sum_le_tsum _
+      _ ≤ ∑' Q : DyadicCube d, ‖F Q‖ₑ * ENNReal.ofReal Q.vol := ENNReal.sum_le_tsum _
       _ ≤ _ := tsum_enorm_mul_vol_le F
   -- monotonicity of the sizes and the Carleson bounds
   have hS₂ : ∀ F G : DyadicCube d → ℝ, ∀ T, (∀ Q, ‖F Q‖ₑ ≤ ‖G Q‖ₑ) → sizeP 2 F T ≤ sizeP 2 G T :=

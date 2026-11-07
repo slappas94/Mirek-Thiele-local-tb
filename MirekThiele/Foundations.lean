@@ -1888,7 +1888,7 @@ theorem volume_biUnion_le_of_chebyshev {Q : DyadicCube d} {Ps : Set (DyadicCube 
         measure_biUnion Ps.to_countable hdisj fun P _ => P.measurableSet_toSet
     _ ≤ ∑' P : Ps, ∑ j ∈ J, (a / ∫⁻ x in Q.toSet, F j x) *
           ∫⁻ x in (P : DyadicCube d).toSet, F j x := by
-        refine tsum_le_tsum fun P => ?_
+        refine ENNReal.tsum_le_tsum fun P => ?_
         obtain ⟨j, hj, hPj⟩ := h P P.2
         calc volume (P : DyadicCube d).toSet
             = volume (P : DyadicCube d).toSet * (∫⁻ x in Q.toSet, F j x) /
@@ -1904,7 +1904,7 @@ theorem volume_biUnion_le_of_chebyshev {Q : DyadicCube d} {Ps : Set (DyadicCube 
                 ∫⁻ x in (P : DyadicCube d).toSet, F j x) (fun _ _ => zero_le) hj
     _ = ∑ j ∈ J, (a / ∫⁻ x in Q.toSet, F j x) *
           ∑' P : Ps, ∫⁻ x in (P : DyadicCube d).toSet, F j x := by
-        rw [Summable.tsum_finsetSum fun _ _ => CompleteLattice.summable]
+        rw [Summable.tsum_finsetSum fun _ _ => ENNReal.summable]
         exact Finset.sum_congr rfl fun j _ => ENNReal.tsum_mul_left
     _ = ∑ j ∈ J, (a / ∫⁻ x in Q.toSet, F j x) * ∫⁻ x in ⋃ P ∈ Ps, P.toSet, F j x := by
         rw [hU]
@@ -2125,7 +2125,7 @@ theorem volume_biUnion_le_of_overlap {Ps₄ Ps₅ : Set (DyadicCube d)}
             rfl
       _ = ∑' R : S, (φ R).parent.toSet.indicator 1 x := (tsum_fintype _).symm
       _ ≤ ∑' P' : Ps₄, (P' : DyadicCube d).parent.toSet.indicator 1 x :=
-          tsum_comp_le_tsum_of_injective hψ
+          ENNReal.tsum_comp_le_tsum_of_injective hψ
             fun P' : Ps₄ => (P' : DyadicCube d).parent.toSet.indicator 1 x
   calc ENNReal.ofReal M * volume (⋃ P ∈ Ps₅, P.toSet)
       = ∫⁻ x in ⋃ P ∈ Ps₅, P.toSet, ENNReal.ofReal M := (setLIntegral_const _ _).symm
@@ -2436,7 +2436,7 @@ theorem volume_biUnion_le_of_P3 {Q : DyadicCube d} {Ps : Set (DyadicCube d)} (hP
     exact exists_normalized_rho (slotForm T a g P) hs h0 hpos hL
   choose ρ' hρ' using hchoice
   -- reduction to finite subfamilies
-  rw [volume_biUnion_eq_tsum hdisj, tsum_eq_iSup_sum]
+  rw [volume_biUnion_eq_tsum hdisj, ENNReal.tsum_eq_iSup_sum]
   refine iSup_le fun s => ?_
   rw [← ENNReal.ofReal_sum_of_nonneg (f := fun P : Ps => (P : DyadicCube d).vol)
     fun P _ => (P : DyadicCube d).vol_pos.le]

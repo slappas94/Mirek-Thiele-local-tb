@@ -943,7 +943,7 @@ theorem abs_integral_ThetaT_mul_le (hG : D.GBound) (w : TestFun d) :
     ((mem_nonleaf_iff D.hd).mp ((D.mem_setF hR hRs hFR).mp ((D.mem_setT hR hRs hFR).mp hT).1).1).1
   have h2 : ∑ T ∈ D.setT hR hRs hFR, ‖α T‖ₑ ≤ ∑' T : R.tree, ‖α T‖ₑ := by
     rw [← Finset.sum_subtype_of_mem (fun T => ‖α T‖ₑ) hsub]
-    exact sum_le_tsum _
+    exact ENNReal.sum_le_tsum _
   have h3 := ENNReal.toReal_mono hfin (h2.trans h271)
   rw [ENNReal.toReal_sum (fun T _ => enorm_ne_top), ENNReal.toReal_mul, ENNReal.toReal_mul,
     ENNReal.toReal_ofReal (mul_nonneg D.C271_nonneg hC₀)] at h3
@@ -2177,7 +2177,7 @@ theorem abs_integral_ThetaGT_mul_le (w : TestFun d) :
     ((mem_nonleaf_iff D.hd).mp ((D.mem_setFG hR hRs hFR).mp ((D.mem_setTG hR hRs hFR).mp hT).1).1).1
   have h2 : ∑ T ∈ D.setTG hR hRs hFR, ‖α T‖ₑ ≤ ∑' T : R.tree, ‖α T‖ₑ := by
     rw [← Finset.sum_subtype_of_mem (fun T => ‖α T‖ₑ) hsub]
-    exact sum_le_tsum _
+    exact ENNReal.sum_le_tsum _
   have h3 := ENNReal.toReal_mono hfin (h2.trans h271)
   rw [ENNReal.toReal_sum (fun T _ => enorm_ne_top), ENNReal.toReal_mul, ENNReal.toReal_mul,
     ENNReal.toReal_ofReal (mul_nonneg D.C271q_nonneg hC₀)] at h3
@@ -3535,7 +3535,7 @@ theorem sum_setT2_le (hG : D.GBound) (hrq : 1 / D.r + 1 / D.q ≤ 1) :
     D.subset_R_of_mem_setF2 hR hRs hFR ((D.mem_setT2 hR hRs hFR).mp hT).1
   have h2 : ∑ T ∈ D.setT2 hR hRs hFR, ‖α T‖ₑ ≤ ∑' T : R.tree, ‖α T‖ₑ := by
     rw [← Finset.sum_subtype_of_mem (fun T => ‖α T‖ₑ) hsub]
-    exact sum_le_tsum _
+    exact ENNReal.sum_le_tsum _
   -- the truncations
   have e𝔥 : truncate R (D.prunedH hR hRs hFR : (Fin d → ℝ) → ℝ) = D.prunedH hR hRs hFR :=
     congrArg Subtype.val (TestFun.truncateₗ_of_supportedOn (D.prunedH_supported hR hRs hFR))
