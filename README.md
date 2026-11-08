@@ -7,7 +7,8 @@ A Lean 4 + Mathlib formalization of the three main theorems of
 > [doi:10.1112/plms.12000](https://doi.org/10.1112/plms.12000).
 
 All three theorems are proved without `sorry` and depend only on the axioms `propext`,
-`Classical.choice` and `Quot.sound`.
+`Classical.choice` and `Quot.sound`. A fourth proved statement shows that the hypotheses of
+Theorem 1.11 are satisfiable, so the theorem is not vacuous.
 
 ## Main results
 
@@ -216,9 +217,10 @@ These are also listed in the module docstring of `Challenge.lean` and in
 
 * `Challenge.lean` — the statement surface to audit: the definitions of §1 of the paper (dyadic
   cubes and test functions, perfect Calderón–Zygmund forms, Hölder tuples, paths and admissible
-  collections, σ-nested tuples, the hypotheses (1.5)–(1.9) and (1.12)–(1.15)) and the three
-  theorems with `sorry`. Its module docstring lists every modelling choice.
-* `Solution.lean` — the same three declarations, proved, importing the development.
+  collections, σ-nested tuples, the hypotheses (1.5)–(1.9) and (1.12)–(1.15)) and the four
+  advertised statements (the three theorems and the satisfiability of the hypotheses of
+  Theorem 1.11) with `sorry`. Its module docstring lists every modelling choice.
+* `Solution.lean` — the same four declarations, proved, importing the development.
 * `MirekThiele.lean` and `MirekThiele/` — the full development, in four modules read in order:
   `Foundations` (definitions, stopping times, pruning, the first half of the main estimate),
   `Estimates` (the second stopping time, the Carleson embedding Theorem 2.68, Lemmas 2.71 and
@@ -257,7 +259,7 @@ to the module system (`module`, `public import`, `@[expose] public section`); th
 mechanically at section boundaries, re-declaring the enclosing `namespace`, `section`, `open` and
 `variable` context at the top of each module. The resulting project was built locally with the
 pinned toolchain and Mathlib (`lake exe cache get`, `lake build`): all modules compile, the only
-warnings are the three deliberate `sorry`s of `Challenge.lean`, and `#print axioms` on the three
-theorems of `Solution.lean` reports exactly `propext`, `Classical.choice` and `Quot.sound`.
+warnings are the four deliberate `sorry`s of `Challenge.lean`, and `#print axioms` on the four
+declarations of `Solution.lean` reports exactly `propext`, `Classical.choice` and `Quot.sound`.
 `lake comparator` has not been run locally (it needs the Linux `bwrap` sandbox); Palomar runs it
 during verification.
