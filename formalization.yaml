@@ -83,7 +83,9 @@ status:
     Modelling choices: (a) the weak boundedness
     condition (1.14) is taken in its scale-invariant form |Λ(b_1 1_Q, ..., b_n 1_Q)| ≤ B |Q|
     where the paper writes ≤ B; (b) the dyadic Hardy norm in (1.15) is the L^1 norm of the
-    dyadic square function, and ‖·‖_∞ is the essential supremum; (c) the testing functions
+    dyadic square function, (1.15) is required for the g with integrable square function
+    (‖g‖_{H¹} < ∞; for the other g the paper's bound is +∞), and ‖·‖_∞ is the essential
+    supremum; (c) the testing functions
     b_{σ,Q,j} of Theorem 1.4 are required to be dyadic test functions, which the paper leaves
     implicit since the form is only defined on dyadic test functions; the functions b_j of
     Theorem 1.11 are locally dyadic test functions (b_j 1_Q is a dyadic test function for
@@ -93,7 +95,8 @@ status:
     every such kernel; (d) I_n is indexed by Fin n and the testing functions are indexed by the
     position in the path; (e) Theorem 1.4 is stated with the hypotheses 1 ≤ k ≤ n inside the
     statement, so that the paper's range k ≥ 1, n ≥ min(k, 2) is covered: the case n = 1 is
-    void because a Hölder tuple of finite exponents forces n ≥ 2, and k > n is vacuous.
+    void because a Hölder tuple of finite exponents forces n ≥ 2, and k > n is vacuous; like
+    Theorems 1.3 and 1.11 it assumes d ≥ 1, which the paper does not repeat for Theorem 1.4.
     Constants are shown to depend only on d, n, B and the exponents but are not tracked
     explicitly.
   sorry_count: 0
@@ -133,12 +136,15 @@ fidelity:
     dimensionally consistent normalization and is used in the global/local reduction.
     (2) The dyadic Hardy norm of (1.15) is realized as the L^1 norm of the dyadic square
     function (one of the standard equivalent norms); a different choice changes only the
-    constant. (3) The testing functions of Theorem 1.4 are dyadic test functions (implicit in
+    constant. The bound (1.15) is required for the g with ‖g‖_{H¹} < ∞ (integrable square
+    function); for the other g, such as indicators of cubes, the paper's bound is +∞, while
+    Lean's integral of a non-integrable function is 0. (3) The testing functions of Theorem 1.4 are dyadic test functions (implicit in
     the paper). The functions b_j of Theorem 1.11 are locally dyadic test functions, and the
     form is extended to them in (1.15) through its kernel; the weak boundedness (1.14) only
     involves the truncations b_j 1_Q, which are dyadic test functions. (4) Theorem 1.4 is stated with the
     hypotheses 1 ≤ k ≤ n inside the statement; the paper's n ≥ min(k, 2) is covered, the
-    case n = 1 being void. (5) Theorem 1.3 has no proof in the paper; the proof given here is
+    case n = 1 being void. It assumes d ≥ 1, as Theorems 1.3 and 1.11 do in the paper; d = 0
+    is degenerate. (5) Theorem 1.3 has no proof in the paper; the proof given here is
     the dyadic paraproduct argument with a dyadic John–Nirenberg inequality.
 
 review:

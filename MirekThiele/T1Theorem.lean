@@ -518,6 +518,8 @@ theorem GlobalTbHypotheses.abs_form_tupQ_le {T : PerfectCZForm d n} {b : Fin n �
     (hatom : ∀ (Q : DyadicCube d) (h : TestFun d), SupportedOn (h : (Fin d → ℝ) → ℝ) Q →
       MeanZero (h : (Fin d → ℝ) → ℝ) →
       hardyNorm (h : (Fin d → ℝ) → ℝ) ≤ Ca * Q.vol ^ (1 - 1 / p) * lpNorm (h : (Fin d → ℝ) → ℝ) p)
+    (hsq : ∀ (Q : DyadicCube d) (h : TestFun d), SupportedOn (h : (Fin d → ℝ) → ℝ) Q →
+      MeanZero (h : (Fin d → ℝ) → ℝ) → Integrable (dyadicSquareFun (h : (Fin d → ℝ) → ℝ)))
     (Q : DyadicCube d) (k : Fin n) (g : TestFun d) (hg : SupportedOn (g : (Fin d → ℝ) → ℝ) Q) :
     |T.form (tupQ hb.loc Q k g)| ≤
       B * (3 * Ca + 1 + Ca * B) * Q.vol ^ (1 - 1 / p) * lpNorm (g : (Fin d → ℝ) → ℝ) p := by
@@ -545,7 +547,7 @@ theorem GlobalTbHypotheses.abs_form_tupQ_le {T : PerfectCZForm d n} {b : Fin n �
     obtain ⟨K, hK, hrep⟩ := T.truncation
     rw [tupQ, form_update_trunc_eq_integral T hb.loc hK hrep Q k h hs h0]
     calc |∫ x, K x * ∏ j, (Function.update b k (h : (Fin d → ℝ) → ℝ)) j (x j)|
-        ≤ B * hardyNorm (h : (Fin d → ℝ) → ℝ) := hb.bmo K hK hrep k h
+        ≤ B * hardyNorm (h : (Fin d → ℝ) → ℝ) := hb.bmo K hK hrep k h (hsq Q h hs h0)
       _ ≤ B * (Ca * V1 * lpNorm (h : (Fin d → ℝ) → ℝ) p) :=
           mul_le_mul_of_nonneg_left (hatom Q h hs h0) hB0.le
       _ = _ := by ring
@@ -674,7 +676,9 @@ theorem GlobalTbHypotheses.testing_globalFamily {T : PerfectCZForm d n} {b : Fin
     (hm : m + 1 = n) (C : IPath.Collection n) {Ca : ℝ} (hCa : 0 ≤ Ca)
     (hatom : ∀ (k : Fin n) (Q : DyadicCube d) (h : TestFun d), SupportedOn (h : (Fin d → ℝ) → ℝ) Q →
       MeanZero (h : (Fin d → ℝ) → ℝ) → hardyNorm (h : (Fin d → ℝ) → ℝ) ≤
-        Ca * Q.vol ^ (1 - 1 / p.p k) * lpNorm (h : (Fin d → ℝ) → ℝ) (p.p k)) :
+        Ca * Q.vol ^ (1 - 1 / p.p k) * lpNorm (h : (Fin d → ℝ) → ℝ) (p.p k))
+    (hsq : ∀ (Q : DyadicCube d) (h : TestFun d), SupportedOn (h : (Fin d → ℝ) → ℝ) Q →
+      MeanZero (h : (Fin d → ℝ) → ℝ) → Integrable (dyadicSquareFun (h : (Fin d → ℝ) → ℝ))) :
     TestingCondition T p C (globalFamily b m) (1 + (∑ j, B ^ p.p j) + B * (3 * Ca + 1 + Ca * B)) := by
   intro σ _ Q hQ g hg f hf hl _
   have hsurj : Function.Surjective σ :=
@@ -739,7 +743,7 @@ theorem GlobalTbHypotheses.testing_globalFamily {T : PerfectCZForm d n} {b : Fin
             (Finset.prod_le_prod₀ (fun j _ => Real.rpow_nonneg hV.le _) hterm)
             (lpNorm_nonneg _ _)
   -- the local bound and the assembly
-  have hloc := hb.abs_form_tupQ_le hB hCa (p.one_lt k) (hatom k) Q₀ k g hg
+  have hloc := hb.abs_form_tupQ_le hB hCa (p.one_lt k) (hatom k) hsq Q₀ k g hg
   have hcf0 : 0 ≤ ∏ j, |cf j| := Finset.prod_nonneg fun j _ => abs_nonneg _
   have hC0 : 0 ≤ B * (3 * Ca + 1 + Ca * B) := by positivity
   have hS0 : 0 ≤ ∑ j, B ^ p.p j := Finset.sum_nonneg fun j _ => Real.rpow_nonneg (by linarith) _
@@ -764,7 +768,9 @@ theorem GlobalTbHypotheses.localTbHypotheses {T : PerfectCZForm d n} {b : Fin n 
     (hm : m + 1 = n) (C : IPath.Collection n) {Ca : ℝ} (hCa : 0 ≤ Ca)
     (hatom : ∀ (k : Fin n) (Q : DyadicCube d) (h : TestFun d), SupportedOn (h : (Fin d → ℝ) → ℝ) Q →
       MeanZero (h : (Fin d → ℝ) → ℝ) → hardyNorm (h : (Fin d → ℝ) → ℝ) ≤
-        Ca * Q.vol ^ (1 - 1 / p.p k) * lpNorm (h : (Fin d → ℝ) → ℝ) (p.p k)) :
+        Ca * Q.vol ^ (1 - 1 / p.p k) * lpNorm (h : (Fin d → ℝ) → ℝ) (p.p k))
+    (hsq : ∀ (Q : DyadicCube d) (h : TestFun d), SupportedOn (h : (Fin d → ℝ) → ℝ) Q →
+      MeanZero (h : (Fin d → ℝ) → ℝ) → Integrable (dyadicSquareFun (h : (Fin d → ℝ) → ℝ))) :
     LocalTbHypotheses T p C (globalFamily b m)
       (1 + (∑ j, B ^ p.p j) + B * (3 * Ca + 1 + Ca * B)) where
   support := fun _ _ _ _ _ x hx => by
@@ -820,14 +826,17 @@ theorem GlobalTbHypotheses.localTbHypotheses {T : PerfectCZForm d n} {b : Fin n 
     obtain ⟨h1, h2⟩ := h l le_rfl
     simp only [globalFamily]
     rw [h2, h1]
-  testing := hb.testing_globalFamily hB p hm C hCa hatom
+  testing := hb.testing_globalFamily hB p hm C hCa hatom hsq
 
 /-- **Theorem 1.11 from Theorem 1.3** (the global/local reduction of [1], p. 38), for `n ≥ 2`,
 given the atom estimate for the dyadic Hardy norm with the exponents of the Hölder tuple: the
 family `globalFamily` satisfies the hypotheses of Theorem 1.4 for paths of full length `n`, and
 Theorem 1.4 (`localTb`) gives the bound (1.16). [PROVED] -/
 theorem globalTb_of_localT1 (hn : 2 ≤ n) (p : HolderTuple n) (h13 : LocalT1 d n p)
-    (hatom : ∀ j, AtomBound d (p.p j)) : GlobalTb d n p := by
+    (hatom : ∀ j, AtomBound d (p.p j))
+    (hsq : ∀ (Q : DyadicCube d) (h : TestFun d), SupportedOn (h : (Fin d → ℝ) → ℝ) Q →
+      MeanZero (h : (Fin d → ℝ) → ℝ) → Integrable (dyadicSquareFun (h : (Fin d → ℝ) → ℝ))) :
+    GlobalTb d n p := by
   intro hd _ B hB
   obtain ⟨m, rfl⟩ : ∃ m, n = m + 1 := ⟨n - 1, by omega⟩
   choose Cat hCat0 hCat using hatom
@@ -847,7 +856,7 @@ theorem globalTb_of_localT1 (hn : 2 ≤ n) (p : HolderTuple n) (h13 : LocalT1 d 
   obtain ⟨C, hC⟩ := localTb hn p h13 (m + 1) (by omega) le_rfl hd (by omega) le_rfl _ hB₁
   refine ⟨C, fun T b hb f => ?_⟩
   exact hC T (IPath.exampleCollection (m + 1)) (IPath.exampleCollection_admissible _)
-    (globalFamily b m) (hb.localTbHypotheses hB p rfl _ hCa0 hatom') f
+    (globalFamily b m) (hb.localTbHypotheses hB p rfl _ hCa0 hatom' hsq) f
 
 /-- The zero form, a perfect Calderón–Zygmund form with kernel `0`. -/
 noncomputable def PerfectCZForm.zero (d n : ℕ) : PerfectCZForm d n where
@@ -867,7 +876,7 @@ theorem globalTbHypotheses_one {n : ℕ} {B : ℝ} (hB : 1 ≤ B) :
   refine ⟨PerfectCZForm.zero d n, ?_⟩
   have hloc : ∀ _ : Fin n, (fun _ : Fin d → ℝ => (1 : ℝ)) ∈ LocTestFun d := fun _ Q =>
     indicator_mem_testFun Q
-  refine ⟨hloc, fun Q _ => ?_, fun _ => ?_, fun Q f _ => ?_, fun K hK hrep j₀ g => ?_⟩
+  refine ⟨hloc, fun Q _ => ?_, fun _ => ?_, fun Q f _ => ?_, fun K hK hrep j₀ g _ => ?_⟩
   · have h1 : avg Q (fun _ : Fin d → ℝ => (1 : ℝ)) = 1 := by
       rw [avg, setIntegral_const, measureReal_def, Q.volume_toSet,
         ENNReal.toReal_ofReal Q.vol_pos.le, smul_eq_mul, mul_one, div_self Q.vol_pos.ne']
@@ -1117,7 +1126,7 @@ theorem atomBound_of_two_le (hd : d ≠ 0) {p : ℝ} (hp : 2 ≤ p) : AtomBound 
   -- the integrand of the Hardy norm is `√G`
   have hint : hardyNorm (h : (Fin d → ℝ) → ℝ) =
       ∫ x, Real.sqrt ((sqFun Q N h : (Fin d → ℝ) → ℝ) x) := by
-    unfold hardyNorm
+    unfold hardyNorm dyadicSquareFun
     exact integral_congr_ae (ae_of_all _ fun x => congrArg Real.sqrt (tsum_sqTerm_eq hd hs h0 hres x))
   -- `√G` is in `L²` and supported on `Q`
   have hmeas : AEStronglyMeasurable (fun x => Real.sqrt ((sqFun Q N h : (Fin d → ℝ) → ℝ) x))
@@ -2058,7 +2067,7 @@ theorem atomBound_of_lt_two (hd : d ≠ 0) {p : ℝ} (hp1 : 1 < p) (hp2 : p < 2)
     · simp only [sqFun_eq_zero hd hx, Real.sqrt_zero]
   -- the Hardy norm is `∫_Q S h`
   have hint : hardyNorm (h : (Fin d → ℝ) → ℝ) = ∫ x, (S : (Fin d → ℝ) → ℝ) x := by
-    unfold hardyNorm
+    unfold hardyNorm dyadicSquareFun
     rw [hS]
     exact integral_congr_ae (ae_of_all _ fun x =>
       congrArg Real.sqrt (tsum_sqTerm_eq hd hs h0 hres x))
@@ -2113,12 +2122,30 @@ theorem atomBound (hd : d ≠ 0) {p : ℝ} (hp : 1 < p) : AtomBound d p := by
   · exact atomBound_of_two_le hd h2
   · exact atomBound_of_lt_two hd hp (not_le.mp h2)
 
+/-- **The square function of an atom is integrable**: for a mean-zero `h` supported on `Q`, the
+square function `S h` is the dyadic test function `√G` (`tsum_sqTerm_eq`), so `‖h‖_{H¹} < ∞` and
+the BMO condition (1.15) applies to `h`. [PROVED] -/
+theorem integrable_dyadicSquareFun (hd : d ≠ 0) {Q : DyadicCube d} {h : TestFun d}
+    (hs : SupportedOn (h : (Fin d → ℝ) → ℝ) Q) (h0 : MeanZero (h : (Fin d → ℝ) → ℝ)) :
+    Integrable (dyadicSquareFun (h : (Fin d → ℝ) → ℝ)) := by
+  obtain ⟨N, hres⟩ := Bridge.exists_resolution h Q
+  have hS : (leafSum Q N (fun x => Real.sqrt ((sqFun Q N h : (Fin d → ℝ) → ℝ) x)) :
+      (Fin d → ℝ) → ℝ) = fun x => Real.sqrt ((sqFun Q N h : (Fin d → ℝ) → ℝ) x) := by
+    refine coe_leafSum Q N (fun L hL x hx y hy => ?_) (fun x hx => ?_)
+    · exact congrArg Real.sqrt (constOn_sqFun_level hd Q N h L hL x hx y hy)
+    · simp only [sqFun_eq_zero hd hx, Real.sqrt_zero]
+  refine (TestFun.integrable
+    (leafSum Q N (fun x => Real.sqrt ((sqFun Q N h : (Fin d → ℝ) → ℝ) x))).2).congr
+    (ae_of_all _ fun x => ?_)
+  rw [hS, dyadicSquareFun, tsum_sqTerm_eq hd hs h0 hres x]
+
 /-- **Theorem 1.11 from Theorem 1.3**, for every Hölder tuple and `n ≥ 2`: the atom estimate holds
 for all exponents, so Theorem 1.11 (in the scale-invariant form `GlobalTb`) follows from
 Theorem 1.3 without further hypotheses. [PROVED] -/
 theorem globalTb (hn : 2 ≤ n) (p : HolderTuple n) (h13 : LocalT1 d n p) : GlobalTb d n p := by
   intro hd hn' B hB
-  exact globalTb_of_localT1 hn p h13 (fun j => atomBound (by omega) (p.one_lt j)) hd hn' B hB
+  exact globalTb_of_localT1 hn p h13 (fun j => atomBound (by omega) (p.one_lt j))
+    (fun _ _ hs h0 => integrable_dyadicSquareFun (by omega) hs h0) hd hn' B hB
 
 end SquareFunctionLp
 

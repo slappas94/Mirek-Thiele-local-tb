@@ -25,7 +25,8 @@ Conventions and modelling choices (also recorded in `formalization.yaml`):
 * Theorem 1.4 is stated for all `k` and `n`: the hypotheses `1 ≤ k ≤ n` are part of `LocalTb`
   (for `k > n` there are no paths of length `k`, so the paper's hypotheses are vacuous), and a
   Hölder tuple of finite exponents forces `n ≥ 2`, so the paper's range `k ≥ 1`, `n ≥ min(k, 2)`
-  is covered and the case `n = 1` is void.
+  is covered and the case `n = 1` is void. Like Theorems 1.3 and 1.11 it assumes `d ≥ 1`, which
+  the paper does not repeat for Theorem 1.4 (`d = 0` is degenerate).
 * The testing functions `b_{σ,𝐐,j}` are required to be dyadic test functions
   (`LocalTbHypotheses.testFun`); the paper leaves this implicit, since `Λ` is only defined on
   dyadic test functions.
@@ -38,7 +39,9 @@ Conventions and modelling choices (also recorded in `formalization.yaml`):
   `Λ(b_1, …, g, …, b_n)` is evaluated through a kernel of `Λ` as in the qualitative truncation
   (iii); kernels of `Λ` agree almost everywhere.
 * The dyadic Hardy norm `‖·‖_{H¹}` in (1.15) is the `L¹` norm of the dyadic square function;
-  `‖·‖_∞` is the essential supremum.
+  `‖·‖_∞` is the essential supremum. The bound (1.15) is required for the `g` with integrable
+  square function, i.e. `‖g‖_{H¹} < ∞`; for the other `g` (for instance `g = 𝟙_Q`) the paper's
+  right-hand side is `+∞`, while Lean's integral of a non-integrable function is `0`.
 -/
 
 @[expose] public section
@@ -284,11 +287,19 @@ def LocalTb (d n k : ℕ) (p : HolderTuple n) : Prop :=
     ∀ b : TestingFamily d n (k - 1), LocalTbHypotheses T p 𝒞 b B →
     ∀ f : Fin n → TestFun d, |T.form f| ≤ C * prodNorm p f
 
-/-- The dyadic Hardy-space norm `‖g‖_{H¹}` (pre-dual of dyadic BMO), defined through the dyadic
-square function `S g = (∑_P |[g]_{child} − [g]_P|² 𝟙_P)^{1/2}`. -/
-noncomputable def hardyNorm (g : (Fin d → ℝ) → ℝ) : ℝ :=
-  ∫ x, Real.sqrt (∑' P : DyadicCube d,
+/-- The dyadic square function `S g(x) = (∑_{P ∋ x} |[g]_{P_x} − [g]_P|²)^{1/2}`, the sum running
+over the dyadic cubes `P` containing `x`, with `P_x` the child of `P` containing `x`. For a dyadic
+test function `g` the series converges at every point: the terms of the cubes on which `g` is
+constant vanish, and the others decay geometrically with the side length. -/
+noncomputable def dyadicSquareFun (g : (Fin d → ℝ) → ℝ) (x : Fin d → ℝ) : ℝ :=
+  Real.sqrt (∑' P : DyadicCube d,
     P.toSet.indicator (fun y => (avg (P.childAt y) g - avg P g) ^ 2) x)
+
+/-- The dyadic Hardy-space norm `‖g‖_{H¹} = ∫ S g` (pre-dual of dyadic BMO). It is the norm of `g`
+when `S g` is integrable, that is, when `‖g‖_{H¹} < ∞`; otherwise the integral takes Lean's default
+value `0`, so the BMO condition (1.15) below assumes that `S g` is integrable. -/
+noncomputable def hardyNorm (g : (Fin d → ℝ) → ℝ) : ℝ :=
+  ∫ x, dyadicSquareFun g x
 
 /-- A *locally dyadic test function*: a function `b` on `ℝ^d` whose truncation `b 𝟙_Q` to every
 dyadic cube `Q` is a dyadic test function. Constant functions, in particular `b = 1`, are of this
@@ -303,7 +314,9 @@ with (1.16): a bounded form satisfies `|Λ(b₁𝟙_Q, …, b_n𝟙_Q)| ≤ C B^
 needed in the global/local reduction). In the BMO condition (1.15) the entries `b_j` need not be
 dyadic test functions, so `Λ(b_1, …, g, …, b_n)` is evaluated through a kernel `K` of `Λ` as in the
 qualitative truncation (iii), `∫ K(x) ∏_j f_j(x_j) dx`; the bound is required for every such kernel
-(two kernels of `Λ` agree almost everywhere). -/
+(two kernels of `Λ` agree almost everywhere) and for every dyadic test function `g` with
+`‖g‖_{H¹} < ∞`, i.e. with integrable square function (for the other `g` the paper's bound is
+`+∞` and says nothing). -/
 structure GlobalTbHypotheses {n : ℕ} (T : PerfectCZForm d n) (b : Fin n → (Fin d → ℝ) → ℝ)
     (B : ℝ) : Prop where
   /-- the functions `b_j` are locally dyadic test functions -/
@@ -315,10 +328,11 @@ structure GlobalTbHypotheses {n : ℕ} (T : PerfectCZForm d n) (b : Fin n → (F
   /-- weak boundedness (1.14) -/
   weak : ∀ (Q : DyadicCube d) (f : Fin n → TestFun d),
     (∀ j, (f j : (Fin d → ℝ) → ℝ) = truncate Q (b j)) → |T.form f| ≤ B * Q.vol
-  /-- BMO condition (1.15), with `Λ(b_1, …, g, …, b_n)` evaluated through a kernel of `Λ` -/
+  /-- BMO condition (1.15) for every `g` with `‖g‖_{H¹} < ∞`, with `Λ(b_1, …, g, …, b_n)`
+  evaluated through a kernel of `Λ` -/
   bmo : ∀ K ∈ TestFunProd d n,
     (∀ f : Fin n → TestFun d, T.form f = ∫ x, K x * ∏ j, (f j : (Fin d → ℝ) → ℝ) (x j)) →
-    ∀ (j₀ : Fin n) (g : TestFun d),
+    ∀ (j₀ : Fin n) (g : TestFun d), Integrable (dyadicSquareFun (g : (Fin d → ℝ) → ℝ)) →
       |∫ x, K x * ∏ j, (Function.update b j₀ (g : (Fin d → ℝ) → ℝ)) j (x j)| ≤
         B * hardyNorm (g : (Fin d → ℝ) → ℝ)
 

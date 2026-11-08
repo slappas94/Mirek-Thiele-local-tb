@@ -114,7 +114,9 @@ for all $`n`$-tuples of dyadic test functions.
 
 The paper allows $`k\ge 1`$ and $`n\ge\min(k,2)`$. The formal statement covers this range: a
 Hölder tuple of finite exponents forces $`n\ge 2`$, and for $`k>n`$ there are no paths of length
-$`k`$, so the hypotheses are vacuous. The case $`k=1`$ is Theorem 1.3.
+$`k`$, so the hypotheses are vacuous. The case $`k=1`$ is Theorem 1.3. Like Theorems 1.3 and
+1.11, the formal statement assumes $`d\ge 1`$; the paper's statement of Theorem 1.4 does not
+repeat this, and $`d=0`$, where $`\mathbb R^d`$ is a point, is degenerate.
 
 ### Theorem 1.11 (perfect multilinear global T(b) theorem)
 
@@ -127,7 +129,7 @@ $`j`$,
 * **(1.12) pseudo-accretivity:** $`|[b_j]_Q|\ge 1`$;
 * **(1.13) norm bound:** $`\|b_j\|_{L^\infty}\le B`$;
 * **(1.14) weak boundedness:** $`|\Lambda(b_1\mathbb 1_Q,\dots,b_n\mathbb 1_Q)|\le B\,|Q|`$;
-* **(1.15) BMO condition:** for every dyadic test function $`g`$,
+* **(1.15) BMO condition:** for every dyadic test function $`g`$ with $`\|g\|_{H^1}<\infty`$,
   $`|\Lambda(b_1,\dots,b_{j-1},g,b_{j+1},\dots,b_n)|\le B\,\|g\|_{H^1}`$.
 
 Here $`\|g\|_{H^1}=\int_{\mathbb R^d}Sg`$ is the dyadic Hardy norm, defined by the dyadic square
@@ -201,7 +203,11 @@ These are also listed in the module docstring of `Challenge.lean` and in
   is not dimensionally consistent with the conclusion; the factor $`|Q|`$ is also what the
   global/local reduction uses.
 * The dyadic Hardy norm in (1.15) is the $`L^1`$ norm of the dyadic square function, one of the
-  standard equivalent norms; $`\|\cdot\|_{L^\infty}`$ is the essential supremum.
+  standard equivalent norms; $`\|\cdot\|_{L^\infty}`$ is the essential supremum. The bound (1.15)
+  is required for the $`g`$ with integrable square function, i.e. $`\|g\|_{H^1}<\infty`$; for the
+  other $`g`$, for instance $`g=\mathbb 1_Q`$, the paper's right-hand side is $`+\infty`$. (Lean
+  assigns the value $`0`$ to the integral of a non-integrable function, so without this
+  restriction (1.15) would force $`\Lambda(b_1,\dots,g,\dots,b_n)=0`$ for every $`g`$.)
 * The testing functions $`b_{\sigma,\mathbf Q,j}`$ of Theorem 1.4 are dyadic test functions. The
   paper leaves this implicit, since $`\Lambda`$ is only defined on dyadic test functions.
 * The functions $`b_j`$ of Theorem 1.11 are locally dyadic test functions, which admits
