@@ -248,33 +248,278 @@ theorem form_update_truncate_eq (T : PerfectCZForm d n) (Q : DyadicCube d)
   · rw [Function.update_of_ne hik, Function.update_of_ne hik]
     simp [Finset.mem_erase, hik]
 
-/-- The tuple `(b_j 𝟙_Q)_{j ≠ k}` with `x` in the slot `k`. -/
-noncomputable def tupQ (b : Fin n → TestFun d) (Q : DyadicCube d) (k : Fin n) (x : TestFun d) :
-    Fin n → TestFun d :=
-  Function.update (fun j => TestFun.truncateₗ Q (b j)) k x
+/-! #### The dyadic cubes of side `2^M` at the origin -/
 
-theorem form_tupQ_add (T : PerfectCZForm d n) (b : Fin n → TestFun d) (Q : DyadicCube d)
-    (k : Fin n) (x y : TestFun d) :
-    T.form (tupQ b Q k (x + y)) = T.form (tupQ b Q k x) + T.form (tupQ b Q k y) :=
+/-- The `2^d` dyadic cubes of side length `2^M` at the origin: `∏_i [0, 2^M)` or `[-2^M, 0)`
+according to `κ_i`. -/
+def quad (M : ℕ) (κ : Fin d → Bool) : DyadicCube d := ⟨M, fun i => if κ i then 0 else -1⟩
+
+theorem quad_vol (M : ℕ) (κ : Fin d → Bool) : (quad M κ).vol = 2 ^ (M * d) := by
+  show (2 : ℝ) ^ ((M : ℤ) * (d : ℤ)) = 2 ^ (M * d)
+  have h := zpow_natCast (2 : ℝ) (M * d)
+  push_cast at h
+  exact h
+
+theorem quad_injective (M : ℕ) : Function.Injective (quad (d := d) M) := by
+  intro κ κ' h
+  funext i
+  have h1 := congrArg (fun Q : DyadicCube d => Q.l i) h
+  simp only [quad] at h1
+  revert h1
+  cases κ i <;> cases κ' i <;> simp
+
+theorem quad_disjoint {M : ℕ} {κ κ' : Fin d → Bool} (h : κ ≠ κ') :
+    Disjoint (quad M κ).toSet (quad M κ').toSet :=
+  (DyadicCube.eq_or_disjoint_of_m_eq (quad M κ) (quad M κ') rfl).resolve_left
+    fun e => h (quad_injective M e)
+
+theorem mem_quad_iff (M : ℕ) (κ : Fin d → Bool) (x : Fin d → ℝ) :
+    x ∈ (quad M κ).toSet ↔
+      ∀ i, if κ i then 0 ≤ x i ∧ x i < 2 ^ M else -(2 : ℝ) ^ M ≤ x i ∧ x i < 0 := by
+  show (∀ i, (2 : ℝ) ^ (M : ℤ) * ((if κ i then 0 else -1 : ℤ) : ℝ) ≤ x i ∧
+    x i < (2 : ℝ) ^ (M : ℤ) * (((if κ i then 0 else -1 : ℤ) : ℝ) + 1)) ↔ _
+  refine forall_congr' fun i => ?_
+  rw [zpow_natCast]
+  cases κ i <;> simp
+
+theorem exists_mem_quad {M : ℕ} {x : Fin d → ℝ} (hx : ∀ i, |x i| < 2 ^ M) :
+    ∃ κ, x ∈ (quad M κ).toSet := by
+  refine ⟨fun i => decide (0 ≤ x i), ?_⟩
+  rw [mem_quad_iff]
+  intro i
+  have h := abs_lt.mp (hx i)
+  by_cases h0 : 0 ≤ x i
+  · simp [h0, h.2]
+  · simp [h0, h.1.le, not_le.mp h0]
+
+/-- A test function supported in `(-2^M, 2^M)^d` is the sum of its truncations to the cubes
+at the origin. [PROVED] -/
+theorem sum_truncateₗ_quad {M : ℕ} (f : TestFun d)
+    (hf : ∀ x, (f : (Fin d → ℝ) → ℝ) x ≠ 0 → ∀ i, |x i| < 2 ^ M) :
+    ∑ κ : Fin d → Bool, TestFun.truncateₗ (quad M κ) f = f := by
+  apply Subtype.ext
+  funext x
+  simp only [Submodule.coe_sum, Finset.sum_apply, TestFun.coe_truncateₗ, truncate]
+  by_cases hfx : (f : (Fin d → ℝ) → ℝ) x = 0
+  · rw [hfx]
+    exact Finset.sum_eq_zero fun κ _ => Set.indicator_apply_eq_zero.mpr fun _ => hfx
+  · obtain ⟨κ₀, hκ₀⟩ := exists_mem_quad (hf x hfx)
+    rw [Finset.sum_eq_single κ₀ (fun κ _ hne =>
+      Set.indicator_of_notMem (Set.disjoint_right.mp (quad_disjoint hne) hκ₀) _)
+      (fun h => absurd (Finset.mem_univ κ₀) h), Set.indicator_of_mem hκ₀]
+
+/-- Every dyadic test function is supported in some box `(-2^M, 2^M)^d`. [PROVED] -/
+theorem TestFun.exists_abs_lt_pow (f : TestFun d) :
+    ∃ M : ℕ, ∀ x, (f : (Fin d → ℝ) → ℝ) x ≠ 0 → ∀ i, |x i| < 2 ^ M := by
+  suffices h : ∃ ρ : ℝ, ∀ x, (f : (Fin d → ℝ) → ℝ) x ≠ 0 → ∀ i, |x i| ≤ ρ by
+    obtain ⟨ρ, hρ⟩ := h
+    obtain ⟨M, hM⟩ := pow_unbounded_of_one_lt ρ (by norm_num : (1 : ℝ) < 2)
+    exact ⟨M, fun x hx i => (hρ x hx i).trans_lt hM⟩
+  have hf : (f : (Fin d → ℝ) → ℝ) ∈
+      Submodule.span ℝ (Set.range (DyadicCube.indicator (d := d))) := f.2
+  refine Submodule.span_induction (p := fun g _ => ∃ ρ : ℝ, ∀ x, g x ≠ 0 → ∀ i, |x i| ≤ ρ)
+    ?_ ?_ ?_ ?_ hf
+  · rintro g ⟨P, rfl⟩
+    refine ⟨(2 : ℝ) ^ P.m * ∑ i, (|(P.l i : ℝ)| + 1), fun x hx i => ?_⟩
+    have hxP : x ∈ P.toSet := by
+      by_contra h
+      exact hx (Set.indicator_of_notMem h _)
+    obtain ⟨h1, h2⟩ := hxP i
+    have hpos : (0 : ℝ) < 2 ^ P.m := zpow_pos (by norm_num) _
+    have hi : |(P.l i : ℝ)| + 1 ≤ ∑ i, (|(P.l i : ℝ)| + 1) :=
+      Finset.single_le_sum (f := fun i => |(P.l i : ℝ)| + 1) (fun i _ => by positivity)
+        (Finset.mem_univ i)
+    have e2 := mul_le_mul_of_nonneg_left hi hpos.le
+    rw [abs_le]
+    constructor
+    · have e1 := mul_le_mul_of_nonneg_left (neg_abs_le (P.l i : ℝ)) hpos.le
+      linarith
+    · have e3 := mul_le_mul_of_nonneg_left
+        (show (P.l i : ℝ) + 1 ≤ |(P.l i : ℝ)| + 1 by linarith [le_abs_self (P.l i : ℝ)]) hpos.le
+      linarith
+  · exact ⟨0, fun x hx => absurd rfl hx⟩
+  · rintro g h _ _ ⟨ρ₁, h₁⟩ ⟨ρ₂, h₂⟩
+    refine ⟨max ρ₁ ρ₂, fun x hx i => ?_⟩
+    by_cases hg : g x = 0
+    · have hh : h x ≠ 0 := fun hh => hx (by simp [hg, hh])
+      exact (h₂ x hh i).trans (le_max_right _ _)
+    · exact (h₁ x hg i).trans (le_max_left _ _)
+  · rintro c g _ ⟨ρ, hρ⟩
+    exact ⟨ρ, fun x hx i => hρ x (fun hg => hx (by simp [hg])) i⟩
+
+/-! #### Locally dyadic test functions and the kernel of the form
+
+The functions `b_j` of Theorem 1.11 are locally dyadic test functions (`LocTestFun`), for example
+`b_j = 1`; only their truncations `b_j 𝟙_Q` are dyadic test functions. In the BMO condition (1.15)
+the value `Λ(b_1, …, h, …, b_n)` is the kernel integral `∫ K(x) ∏_j f_j(x_j) dx`. Since the kernel
+has bounded support (`TestFunProd.exists_abs_lt_pow`), this integral equals `Λ` applied to the
+truncations of the `b_j` to a large box (`form_update_box_eq_integral`), and against a mean-zero
+`h` supported on `Q` perfect smoothness reduces the box to `Q`
+(`form_update_trunc_eq_integral`). -/
+
+/-- The truncation `b 𝟙_Q` of a locally dyadic test function, as a dyadic test function. -/
+noncomputable def LocTestFun.trunc {b : (Fin d → ℝ) → ℝ} (hb : b ∈ LocTestFun d)
+    (Q : DyadicCube d) : TestFun d :=
+  ⟨truncate Q b, hb Q⟩
+
+@[simp] theorem LocTestFun.coe_trunc {b : (Fin d → ℝ) → ℝ} (hb : b ∈ LocTestFun d)
+    (Q : DyadicCube d) : ((LocTestFun.trunc hb Q : TestFun d) : (Fin d → ℝ) → ℝ) = truncate Q b :=
+  rfl
+
+/-- The truncation of a locally dyadic test function to the box `[-2^M, 2^M)^d`, the union of the
+`2^d` cubes `quad M κ`, as a dyadic test function. -/
+noncomputable def LocTestFun.box {b : (Fin d → ℝ) → ℝ} (hb : b ∈ LocTestFun d) (M : ℕ) :
+    TestFun d :=
+  ∑ κ : Fin d → Bool, LocTestFun.trunc hb (quad M κ)
+
+/-- The box truncation agrees with `b` inside `(-2^M, 2^M)^d`. [PROVED] -/
+theorem LocTestFun.box_apply {b : (Fin d → ℝ) → ℝ} (hb : b ∈ LocTestFun d) {M : ℕ}
+    {y : Fin d → ℝ} (hy : ∀ i, |y i| < 2 ^ M) :
+    (LocTestFun.box hb M : (Fin d → ℝ) → ℝ) y = b y := by
+  obtain ⟨κ₀, hκ₀⟩ := exists_mem_quad hy
+  simp only [LocTestFun.box, Submodule.coe_sum, Finset.sum_apply, LocTestFun.coe_trunc, truncate]
+  rw [Finset.sum_eq_single κ₀ (fun κ _ hne =>
+      Set.indicator_of_notMem (Set.disjoint_right.mp (quad_disjoint hne) hκ₀) _)
+      (fun h => absurd (Finset.mem_univ κ₀) h), Set.indicator_of_mem hκ₀]
+
+/-- Every dyadic test function on `ℝ^{dn}` is supported in some box `(-2^M, 2^M)^{dn}`.
+[PROVED] -/
+theorem TestFunProd.exists_abs_lt_pow {K : (Fin n → Fin d → ℝ) → ℝ} (hK : K ∈ TestFunProd d n) :
+    ∃ M : ℕ, ∀ x, K x ≠ 0 → ∀ j i, |x j i| < 2 ^ M := by
+  refine Submodule.span_induction
+    (p := fun g _ => ∃ M : ℕ, ∀ x, g x ≠ 0 → ∀ j i, |x j i| < 2 ^ M) ?_ ?_ ?_ ?_ hK
+  · rintro g ⟨P, -, rfl⟩
+    choose Mj hMj using fun j => TestFun.exists_abs_lt_pow (TestFun.ind (P j))
+    refine ⟨∑ j, Mj j, fun x hx j i => ?_⟩
+    have hxP : x ∈ DyadicCube.prodSet P := by
+      by_contra h
+      exact hx (Set.indicator_of_notMem h _)
+    have hxj : x j ∈ (P j).toSet := hxP j
+    have h1 : ((TestFun.ind (P j) : TestFun d) : (Fin d → ℝ) → ℝ) (x j) ≠ 0 := by
+      rw [TestFun.coe_ind, Set.indicator_of_mem hxj]
+      exact one_ne_zero
+    exact (hMj j (x j) h1 i).trans_le (pow_le_pow_right₀ one_le_two
+      (Finset.single_le_sum (f := Mj) (fun _ _ => Nat.zero_le _) (Finset.mem_univ j)))
+  · exact ⟨0, fun x hx => absurd rfl hx⟩
+  · rintro g h _ _ ⟨M₁, h₁⟩ ⟨M₂, h₂⟩
+    refine ⟨max M₁ M₂, fun x hx j i => ?_⟩
+    by_cases hg : g x = 0
+    · have hh : h x ≠ 0 := fun hh => hx (by simp [hg, hh])
+      exact (h₂ x hh j i).trans_le (pow_le_pow_right₀ one_le_two (le_max_right _ _))
+    · exact (h₁ x hg j i).trans_le (pow_le_pow_right₀ one_le_two (le_max_left _ _))
+  · rintro c g _ ⟨M, hM⟩
+    exact ⟨M, fun x hx j i => hM x (fun hg => hx (by simp [hg])) j i⟩
+
+/-- **`Λ(b_1, …, h, …, b_n)` through a kernel equals `Λ` on box truncations**: for a kernel `K` of
+`Λ` supported in the box of size `2^M` in every variable. [PROVED] -/
+theorem form_update_box_eq_integral (T : PerfectCZForm d n) {b : Fin n → (Fin d → ℝ) → ℝ}
+    (hb : ∀ j, b j ∈ LocTestFun d) {K : (Fin n → Fin d → ℝ) → ℝ}
+    (hrep : ∀ f : Fin n → TestFun d, T.form f = ∫ x, K x * ∏ j, (f j : (Fin d → ℝ) → ℝ) (x j))
+    {M : ℕ} (hM : ∀ x, K x ≠ 0 → ∀ j i, |x j i| < 2 ^ M) (k : Fin n) (h : TestFun d) :
+    T.form (Function.update (fun j => LocTestFun.box (hb j) M) k h) =
+      ∫ x, K x * ∏ j, (Function.update b k (h : (Fin d → ℝ) → ℝ)) j (x j) := by
+  rw [hrep]
+  refine integral_congr_ae (ae_of_all _ fun x => ?_)
+  dsimp only
+  by_cases hK0 : K x = 0
+  · rw [hK0, zero_mul, zero_mul]
+  · congr 1
+    refine Finset.prod_congr rfl fun j _ => ?_
+    by_cases hjk : j = k
+    · subst hjk
+      rw [Function.update_self, Function.update_self]
+    · rw [Function.update_of_ne hjk, Function.update_of_ne hjk]
+      exact LocTestFun.box_apply (hb j) (hM x hK0 j)
+
+/-- **Against a mean-zero entry, `Λ(b_1, …, h, …, b_n) = Λ(b_1 𝟙_Q, …, h, …, b_n 𝟙_Q)`**: for `h`
+supported on `Q` with mean zero, the kernel integral with the locally dyadic test functions `b_j`
+equals `Λ` applied to their truncations to `Q` (perfect smoothness, `form_update_truncate_eq`).
+[PROVED] -/
+theorem form_update_trunc_eq_integral (T : PerfectCZForm d n) {b : Fin n → (Fin d → ℝ) → ℝ}
+    (hb : ∀ j, b j ∈ LocTestFun d) {K : (Fin n → Fin d → ℝ) → ℝ} (hK : K ∈ TestFunProd d n)
+    (hrep : ∀ f : Fin n → TestFun d, T.form f = ∫ x, K x * ∏ j, (f j : (Fin d → ℝ) → ℝ) (x j))
+    (Q : DyadicCube d) (k : Fin n) (h : TestFun d) (hs : SupportedOn (h : (Fin d → ℝ) → ℝ) Q)
+    (h0 : MeanZero (h : (Fin d → ℝ) → ℝ)) :
+    T.form (Function.update (fun j => LocTestFun.trunc (hb j) Q) k h) =
+      ∫ x, K x * ∏ j, (Function.update b k (h : (Fin d → ℝ) → ℝ)) j (x j) := by
+  obtain ⟨M₁, hM₁⟩ := TestFunProd.exists_abs_lt_pow hK
+  obtain ⟨M₂, hM₂⟩ := TestFun.exists_abs_lt_pow (TestFun.ind Q)
+  have hQbox : ∀ y ∈ Q.toSet, ∀ i, |y i| < 2 ^ (M₁ + M₂) := fun y hy i => by
+    have h1 : ((TestFun.ind Q : TestFun d) : (Fin d → ℝ) → ℝ) y ≠ 0 := by
+      rw [TestFun.coe_ind, Set.indicator_of_mem hy]
+      exact one_ne_zero
+    exact (hM₂ y h1 i).trans_le (pow_le_pow_right₀ one_le_two (Nat.le_add_left _ _))
+  have hKbox : ∀ x, K x ≠ 0 → ∀ j i, |x j i| < 2 ^ (M₁ + M₂) := fun x hx j i =>
+    (hM₁ x hx j i).trans_le (pow_le_pow_right₀ one_le_two (Nat.le_add_right _ _))
+  have htr : ∀ j, TestFun.truncateₗ Q (LocTestFun.box (hb j) (M₁ + M₂)) =
+      LocTestFun.trunc (hb j) Q := by
+    intro j
+    apply Subtype.ext
+    funext y
+    rw [TestFun.coe_truncateₗ, LocTestFun.coe_trunc]
+    by_cases hy : y ∈ Q.toSet
+    · rw [truncate, truncate, Set.indicator_of_mem hy, Set.indicator_of_mem hy]
+      exact LocTestFun.box_apply (hb j) (hQbox y hy)
+    · rw [truncate, truncate, Set.indicator_of_notMem hy, Set.indicator_of_notMem hy]
+  have e : (fun j => LocTestFun.trunc (hb j) Q) =
+      fun j => TestFun.truncateₗ Q (LocTestFun.box (hb j) (M₁ + M₂)) :=
+    funext fun j => (htr j).symm
+  rw [e]
+  exact (form_update_truncate_eq T Q (fun j => LocTestFun.box (hb j) (M₁ + M₂)) k h hs h0).trans
+    (form_update_box_eq_integral T hb hrep hKbox k h)
+
+/-- `‖b_j 𝟙_Q‖_p ≤ B |Q|^{1/p}` under the norm bound (1.13). [PROVED] -/
+theorem GlobalTbHypotheses.lpNorm_trunc_le {T : PerfectCZForm d n}
+    {b : Fin n → (Fin d → ℝ) → ℝ} {B : ℝ} (hb : GlobalTbHypotheses T b B) (hB : 0 ≤ B)
+    (Q : DyadicCube d) (j : Fin n) {p : ℝ} (hp : 0 < p) :
+    lpNorm ((LocTestFun.trunc (hb.loc j) Q : TestFun d) : (Fin d → ℝ) → ℝ) p ≤
+      B * Q.vol ^ (1 / p) := by
+  have hmem : MemLp (truncate Q (b j)) ⊤ volume := TestFun.memLp (LocTestFun.trunc (hb.loc j) Q).2 ⊤
+  have h1 := lpNorm_truncate_le_supNorm_mul Q (truncate Q (b j)) hp hmem
+  have htt : truncate Q (truncate Q (b j)) = truncate Q (b j) := by
+    funext x
+    by_cases hx : x ∈ Q.toSet
+    · rw [truncate, truncate, Set.indicator_of_mem hx, Set.indicator_of_mem hx]
+    · rw [truncate, truncate, Set.indicator_of_notMem hx, Set.indicator_of_notMem hx]
+  rw [htt] at h1
+  have hle : eLpNorm (truncate Q (b j)) ⊤ volume ≤ ENNReal.ofReal B := by
+    rw [truncate]
+    exact (eLpNorm_indicator_le (b j) Q.measurableSet_toSet.nullMeasurableSet).trans
+      (hb.bound j)
+  have h2 : supNorm (truncate Q (b j)) ≤ B := by
+    unfold supNorm
+    calc (eLpNorm (truncate Q (b j)) ⊤ volume).toReal ≤ (ENNReal.ofReal B).toReal :=
+          ENNReal.toReal_mono ENNReal.ofReal_ne_top hle
+      _ = B := ENNReal.toReal_ofReal hB
+  exact h1.trans (mul_le_mul_of_nonneg_right h2 (Real.rpow_nonneg Q.vol_pos.le _))
+
+/-- The tuple `(b_j 𝟙_Q)_{j ≠ k}` with `x` in the slot `k`. -/
+noncomputable def tupQ {b : Fin n → (Fin d → ℝ) → ℝ} (hb : ∀ j, b j ∈ LocTestFun d)
+    (Q : DyadicCube d) (k : Fin n) (x : TestFun d) : Fin n → TestFun d :=
+  Function.update (fun j => LocTestFun.trunc (hb j) Q) k x
+
+theorem form_tupQ_add (T : PerfectCZForm d n) {b : Fin n → (Fin d → ℝ) → ℝ}
+    (hb : ∀ j, b j ∈ LocTestFun d) (Q : DyadicCube d) (k : Fin n) (x y : TestFun d) :
+    T.form (tupQ hb Q k (x + y)) = T.form (tupQ hb Q k x) + T.form (tupQ hb Q k y) :=
   MultilinearMap.map_update_add _ _ _ _ _
 
-theorem form_tupQ_smul (T : PerfectCZForm d n) (b : Fin n → TestFun d) (Q : DyadicCube d)
-    (k : Fin n) (c : ℝ) (x : TestFun d) :
-    T.form (tupQ b Q k (c • x)) = c * T.form (tupQ b Q k x) := by
+theorem form_tupQ_smul (T : PerfectCZForm d n) {b : Fin n → (Fin d → ℝ) → ℝ}
+    (hb : ∀ j, b j ∈ LocTestFun d) (Q : DyadicCube d) (k : Fin n) (c : ℝ) (x : TestFun d) :
+    T.form (tupQ hb Q k (c • x)) = c * T.form (tupQ hb Q k x) := by
   unfold tupQ
   rw [MultilinearMap.map_update_smul, smul_eq_mul]
 
 /-- **The local bound of the global/local reduction** (p. 38, [1]): for `g` supported on `Q`,
 `|Λ(b_1 𝟙_Q, …, g, …, b_n 𝟙_Q)| ≤ B (3 C_a + 1 + C_a B) |Q|^{1-1/p} ‖g‖_p`, where `C_a` is the
 constant of the atom estimate for the exponent `p`. [PROVED] -/
-theorem GlobalTbHypotheses.abs_form_tupQ_le {T : PerfectCZForm d n} {b : Fin n → TestFun d}
+theorem GlobalTbHypotheses.abs_form_tupQ_le {T : PerfectCZForm d n} {b : Fin n → (Fin d → ℝ) → ℝ}
     {B : ℝ} (hb : GlobalTbHypotheses T b B) (hB : 1 ≤ B) {Ca : ℝ} (hCa : 0 ≤ Ca) {p : ℝ}
     (hp : 1 < p)
     (hatom : ∀ (Q : DyadicCube d) (h : TestFun d), SupportedOn (h : (Fin d → ℝ) → ℝ) Q →
       MeanZero (h : (Fin d → ℝ) → ℝ) →
       hardyNorm (h : (Fin d → ℝ) → ℝ) ≤ Ca * Q.vol ^ (1 - 1 / p) * lpNorm (h : (Fin d → ℝ) → ℝ) p)
     (Q : DyadicCube d) (k : Fin n) (g : TestFun d) (hg : SupportedOn (g : (Fin d → ℝ) → ℝ) Q) :
-    |T.form (tupQ b Q k g)| ≤
+    |T.form (tupQ hb.loc Q k g)| ≤
       B * (3 * Ca + 1 + Ca * B) * Q.vol ^ (1 - 1 / p) * lpNorm (g : (Fin d → ℝ) → ℝ) p := by
   have hV := Q.vol_pos
   have hp0 : 0 < p := by linarith
@@ -295,12 +540,12 @@ theorem GlobalTbHypotheses.abs_form_tupQ_le {T : PerfectCZForm d n} {b : Fin n �
   -- mean-zero entries: (1.15) and the atom estimate
   have hmz : ∀ h : TestFun d, SupportedOn (h : (Fin d → ℝ) → ℝ) Q →
       MeanZero (h : (Fin d → ℝ) → ℝ) →
-      |T.form (tupQ b Q k h)| ≤ B * Ca * V1 * lpNorm (h : (Fin d → ℝ) → ℝ) p := by
+      |T.form (tupQ hb.loc Q k h)| ≤ B * Ca * V1 * lpNorm (h : (Fin d → ℝ) → ℝ) p := by
     intro h hs h0
-    rw [tupQ, form_update_truncate_eq T Q b k h hs h0]
-    have hbmo := hb.bmo k h (Function.update b k h) (Function.update_self _ _ _)
-      (fun j hj => Function.update_of_ne hj _ _)
-    calc |T.form (Function.update b k h)| ≤ B * hardyNorm (h : (Fin d → ℝ) → ℝ) := hbmo
+    obtain ⟨K, hK, hrep⟩ := T.truncation
+    rw [tupQ, form_update_trunc_eq_integral T hb.loc hK hrep Q k h hs h0]
+    calc |∫ x, K x * ∏ j, (Function.update b k (h : (Fin d → ℝ) → ℝ)) j (x j)|
+        ≤ B * hardyNorm (h : (Fin d → ℝ) → ℝ) := hb.bmo K hK hrep k h
       _ ≤ B * (Ca * V1 * lpNorm (h : (Fin d → ℝ) → ℝ) p) :=
           mul_le_mul_of_nonneg_left (hatom Q h hs h0) hB0.le
       _ = _ := by ring
@@ -345,43 +590,43 @@ theorem GlobalTbHypotheses.abs_form_tupQ_le {T : PerfectCZForm d n} {b : Fin n �
   have hck1 : |ck| ≤ 1 := by
     rw [hck, abs_inv]
     exact inv_le_one_of_one_le₀ hacc
-  set h₁ : TestFun d := TestFun.ind Q - ck • TestFun.truncateₗ Q (b k) with hh₁
+  set h₁ : TestFun d := TestFun.ind Q - ck • LocTestFun.trunc (hb.loc k) Q with hh₁
   have hh₁s : SupportedOn (h₁ : (Fin d → ℝ) → ℝ) Q := by
     intro x hx
     rw [hh₁, Submodule.coe_sub, Submodule.coe_smul, Pi.sub_apply, Pi.smul_apply, TestFun.coe_ind,
-      TestFun.coe_truncateₗ, Set.indicator_of_notMem hx, truncate, Set.indicator_of_notMem hx,
+      LocTestFun.coe_trunc, Set.indicator_of_notMem hx, truncate, Set.indicator_of_notMem hx,
       smul_zero, sub_zero]
-  have hintb : ∫ x, ((TestFun.truncateₗ Q (b k) : TestFun d) : (Fin d → ℝ) → ℝ) x =
+  have hintb : ∫ x, ((LocTestFun.trunc (hb.loc k) Q : TestFun d) : (Fin d → ℝ) → ℝ) x =
       avg Q (b k : (Fin d → ℝ) → ℝ) * Q.vol := by
-    rw [TestFun.coe_truncateₗ, truncate, integral_indicator Q.measurableSet_toSet, avg_mul_vol]
+    rw [LocTestFun.coe_trunc, truncate, integral_indicator Q.measurableSet_toSet, avg_mul_vol]
   have hh₁0 : MeanZero (h₁ : (Fin d → ℝ) → ℝ) := by
     show TestFun.integralₗ h₁ = 0
     rw [hh₁, map_sub, map_smul, smul_eq_mul, TestFun.integralₗ_apply, TestFun.integralₗ_apply,
       hintQ, hintb, hck, ← mul_assoc, inv_mul_cancel₀ havg0, one_mul, sub_self]
-  have hbk : lpNorm ((TestFun.truncateₗ Q (b k) : TestFun d) : (Fin d → ℝ) → ℝ) p ≤ B * Vp := by
-    calc _ ≤ supNorm (b k : (Fin d → ℝ) → ℝ) * Vp := TestFun.lpNorm_truncateₗ_le_supNorm_mul Q (b k) hp0
-      _ ≤ B * Vp := mul_le_mul_of_nonneg_right (hb.bound k) hVp0
+  have hbk : lpNorm ((LocTestFun.trunc (hb.loc k) Q : TestFun d) : (Fin d → ℝ) → ℝ) p ≤ B * Vp :=
+    hb.lpNorm_trunc_le hB0.le Q k hp0
   have hh₁n : lpNorm (h₁ : (Fin d → ℝ) → ℝ) p ≤ (1 + B) * Vp := by
     calc lpNorm (h₁ : (Fin d → ℝ) → ℝ) p
         ≤ lpNorm ((TestFun.ind Q : TestFun d) : (Fin d → ℝ) → ℝ) p +
-            lpNorm ((ck • TestFun.truncateₗ Q (b k) : TestFun d) : (Fin d → ℝ) → ℝ) p :=
+            lpNorm ((ck • LocTestFun.trunc (hb.loc k) Q : TestFun d) : (Fin d → ℝ) → ℝ) p :=
           TestFun.lpNorm_sub_le _ _ hp.le
-      _ = Vp + |ck| * lpNorm ((TestFun.truncateₗ Q (b k) : TestFun d) : (Fin d → ℝ) → ℝ) p := by
+      _ = Vp + |ck| * lpNorm ((LocTestFun.trunc (hb.loc k) Q : TestFun d) : (Fin d → ℝ) → ℝ) p := by
           rw [TestFun.lpNorm_ind Q hp0, TestFun.lpNorm_smul]
       _ ≤ Vp + 1 * (B * Vp) :=
           add_le_add le_rfl (mul_le_mul hck1 hbk (lpNorm_nonneg _ _) zero_le_one)
       _ = _ := by ring
-  have hweak : |T.form (tupQ b Q k (TestFun.truncateₗ Q (b k)))| ≤ B * Q.vol := by
-    have e : tupQ b Q k (TestFun.truncateₗ Q (b k)) = fun j => TestFun.truncateₗ Q (b j) :=
+  have hweak : |T.form (tupQ hb.loc Q k (LocTestFun.trunc (hb.loc k) Q))| ≤ B * Q.vol := by
+    have e : tupQ hb.loc Q k (LocTestFun.trunc (hb.loc k) Q) =
+        fun j => LocTestFun.trunc (hb.loc j) Q :=
       Function.update_eq_self k _
     rw [e]
     exact hb.weak Q _ fun _ => rfl
-  have hind : |T.form (tupQ b Q k (TestFun.ind Q))| ≤ B * (Ca * (1 + B) + 1) * Q.vol := by
-    have e : TestFun.ind Q = h₁ + ck • TestFun.truncateₗ Q (b k) := by rw [hh₁, sub_add_cancel]
+  have hind : |T.form (tupQ hb.loc Q k (TestFun.ind Q))| ≤ B * (Ca * (1 + B) + 1) * Q.vol := by
+    have e : TestFun.ind Q = h₁ + ck • LocTestFun.trunc (hb.loc k) Q := by rw [hh₁, sub_add_cancel]
     rw [e, form_tupQ_add, form_tupQ_smul]
     have h1 := hmz h₁ hh₁s hh₁0
-    calc |T.form (tupQ b Q k h₁) + ck * T.form (tupQ b Q k (TestFun.truncateₗ Q (b k)))|
-        ≤ |T.form (tupQ b Q k h₁)| + |ck| * |T.form (tupQ b Q k (TestFun.truncateₗ Q (b k)))| := by
+    calc |T.form (tupQ hb.loc Q k h₁) + ck * T.form (tupQ hb.loc Q k (LocTestFun.trunc (hb.loc k) Q))|
+        ≤ |T.form (tupQ hb.loc Q k h₁)| + |ck| * |T.form (tupQ hb.loc Q k (LocTestFun.trunc (hb.loc k) Q))| := by
           rw [← abs_mul]
           exact abs_add_le _ _
       _ ≤ B * Ca * V1 * ((1 + B) * Vp) + 1 * (B * Q.vol) :=
@@ -393,10 +638,10 @@ theorem GlobalTbHypotheses.abs_form_tupQ_le {T : PerfectCZForm d n} {b : Fin n �
   -- assembly
   have e : g = g₀ + c • TestFun.ind Q := by rw [hg₀, sub_add_cancel]
   have h0 := hmz g₀ hg₀s hg₀0
-  calc |T.form (tupQ b Q k g)|
-      = |T.form (tupQ b Q k g₀) + c * T.form (tupQ b Q k (TestFun.ind Q))| := by
+  calc |T.form (tupQ hb.loc Q k g)|
+      = |T.form (tupQ hb.loc Q k g₀) + c * T.form (tupQ hb.loc Q k (TestFun.ind Q))| := by
         rw [← form_tupQ_smul, ← form_tupQ_add, ← e]
-    _ ≤ |T.form (tupQ b Q k g₀)| + |c| * |T.form (tupQ b Q k (TestFun.ind Q))| := by
+    _ ≤ |T.form (tupQ hb.loc Q k g₀)| + |c| * |T.form (tupQ hb.loc Q k (TestFun.ind Q))| := by
         rw [← abs_mul]
         exact abs_add_le _ _
     _ ≤ B * Ca * V1 * (2 * lpNorm (g : (Fin d → ℝ) → ℝ) p) +
@@ -410,20 +655,21 @@ theorem GlobalTbHypotheses.abs_form_tupQ_le {T : PerfectCZForm d n} {b : Fin n �
 
 /-- **The testing family of the global/local reduction**: `b_{σ,𝐐,σ(l)} = [b_j]_{Q_j}^{-1} b_j 𝟙_{Q_j}`
 for `j = σ(l)` (p. 38). -/
-noncomputable def globalFamily (b : Fin n → TestFun d) (m : ℕ) : TestingFamily d n m :=
+noncomputable def globalFamily (b : Fin n → (Fin d → ℝ) → ℝ) (m : ℕ) : TestingFamily d n m :=
   fun σ Q l => (avg (Q (σ l.castSucc)) (b (σ l.castSucc) : (Fin d → ℝ) → ℝ))⁻¹ •
     truncate (Q (σ l.castSucc)) (b (σ l.castSucc))
 
-theorem globalFamily_eq (b : Fin n → TestFun d) (m : ℕ) (σ : IPath n (m + 1))
-    (Q : Fin n → DyadicCube d) (l : Fin m) :
+theorem globalFamily_eq {b : Fin n → (Fin d → ℝ) → ℝ} (hb : ∀ j, b j ∈ LocTestFun d) (m : ℕ)
+    (σ : IPath n (m + 1)) (Q : Fin n → DyadicCube d) (l : Fin m) :
     globalFamily b m σ Q l = (((avg (Q (σ l.castSucc)) (b (σ l.castSucc) : (Fin d → ℝ) → ℝ))⁻¹ •
-      TestFun.truncateₗ (Q (σ l.castSucc)) (b (σ l.castSucc)) : TestFun d) : (Fin d → ℝ) → ℝ) := rfl
+      LocTestFun.trunc (hb (σ l.castSucc)) (Q (σ l.castSucc)) : TestFun d) : (Fin d → ℝ) → ℝ) :=
+  rfl
 
 /-- **The testing condition (1.9) for the family of the reduction**, with the constant
 `B₁ = 1 + ∑_j B^{p_j} + B (3 C_a + 1 + C_a B)`: at `(σ, 𝐐)` with `σ` of full length, the tuple of
 (1.9) is `(c_j b_j 𝟙_Q)_{j ≠ k}` with `g` in the slot `k = σ(n)`, `Q = Q_k`; the local bound and
 `‖b_j 𝟙_Q‖_{p_j} ≥ |Q|^{1/p_j}` give the bound. [PROVED] -/
-theorem GlobalTbHypotheses.testing_globalFamily {T : PerfectCZForm d n} {b : Fin n → TestFun d}
+theorem GlobalTbHypotheses.testing_globalFamily {T : PerfectCZForm d n} {b : Fin n → (Fin d → ℝ) → ℝ}
     {B : ℝ} (hb : GlobalTbHypotheses T b B) (hB : 1 ≤ B) (p : HolderTuple n) {m : ℕ}
     (hm : m + 1 = n) (C : IPath.Collection n) {Ca : ℝ} (hCa : 0 ≤ Ca)
     (hatom : ∀ (k : Fin n) (Q : DyadicCube d) (h : TestFun d), SupportedOn (h : (Fin d → ℝ) → ℝ) Q →
@@ -436,7 +682,7 @@ theorem GlobalTbHypotheses.testing_globalFamily {T : PerfectCZForm d n} {b : Fin
   set k := σ (Fin.last m) with hk
   set Q₀ := Q k
   set cf : Fin n → ℝ := fun j => if j = k then 1 else (avg (Q j) (b j : (Fin d → ℝ) → ℝ))⁻¹ with hcf
-  have hf_eq : f = fun j => cf j • tupQ b Q₀ k g j := by
+  have hf_eq : f = fun j => cf j • tupQ hb.loc Q₀ k g j := by
     funext j
     obtain ⟨i, rfl⟩ := hsurj j
     induction i using Fin.lastCases with
@@ -447,13 +693,13 @@ theorem GlobalTbHypotheses.testing_globalFamily {T : PerfectCZForm d n} {b : Fin
       have hne : σ i.castSucc ≠ k := fun h => (Fin.castSucc_lt_last i).ne (σ.injective h)
       have hsub : Q₀.toSet ⊆ (Q (σ i.castSucc)).toSet := hQ.mono _ _ (Fin.castSucc_lt_last i)
       apply Subtype.ext
-      rw [hl i, globalFamily_eq]
+      rw [hl i, globalFamily_eq hb.loc]
       simp only [hcf, hne, ↓reduceIte, tupQ, Function.update_of_ne hne, Submodule.coe_smul,
-        TestFun.coe_truncateₗ]
+        LocTestFun.coe_trunc]
       exact truncate_smul_truncate_of_subset hsub _ _
-  have hform : T.form f = (∏ j, cf j) * T.form (tupQ b Q₀ k g) := by
+  have hform : T.form f = (∏ j, cf j) * T.form (tupQ hb.loc Q₀ k g) := by
     rw [hf_eq, MultilinearMap.map_smul_univ, smul_eq_mul]
-  have hprod : prodNorm p f = (∏ j, |cf j|) * prodNorm p (tupQ b Q₀ k g) := by
+  have hprod : prodNorm p f = (∏ j, |cf j|) * prodNorm p (tupQ hb.loc Q₀ k g) := by
     rw [hf_eq]
     unfold prodNorm
     rw [← Finset.prod_mul_distrib]
@@ -461,26 +707,26 @@ theorem GlobalTbHypotheses.testing_globalFamily {T : PerfectCZForm d n} {b : Fin
   -- the lower bound `∏_j ‖(tupQ g)_j‖ ≥ |Q|^{1-1/p_k} ‖g‖_{p_k}`
   have hV := Q₀.vol_pos
   have hlow : Q₀.vol ^ (1 - 1 / p.p k) * lpNorm (g : (Fin d → ℝ) → ℝ) (p.p k) ≤
-      prodNorm p (tupQ b Q₀ k g) := by
+      prodNorm p (tupQ hb.loc Q₀ k g) := by
     rw [tupQ, Bridge.prodNorm_update]
     have hsum : ∑ j ∈ Finset.univ.erase k, 1 / p.p j = 1 - 1 / p.p k := by
       rw [Finset.sum_erase_eq_sub (Finset.mem_univ k)]
       simp only [one_div]
       rw [p.sum_inv]
     have hterm : ∀ j ∈ Finset.univ.erase k, Q₀.vol ^ (1 / p.p j) ≤
-        lpNorm ((TestFun.truncateₗ Q₀ (b j) : TestFun d) : (Fin d → ℝ) → ℝ) (p.p j) := by
+        lpNorm ((LocTestFun.trunc (hb.loc j) Q₀ : TestFun d) : (Fin d → ℝ) → ℝ) (p.p j) := by
       intro j _
       have hacc := hb.accretive Q₀ j
-      have h := abs_avg_le Q₀ (TestFun.truncateₗ Q₀ (b j)) (p.one_lt j).le
-      rw [TestFun.coe_truncateₗ, avg_truncate_of_subset (subset_refl _)] at h
+      have h := abs_avg_le Q₀ (LocTestFun.trunc (hb.loc j) Q₀) (p.one_lt j).le
+      rw [LocTestFun.coe_trunc, avg_truncate_of_subset (subset_refl _)] at h
       have hVmp : Q₀.vol ^ (-(1 / p.p j)) * Q₀.vol ^ (1 / p.p j) = 1 := by
         rw [← Real.rpow_add hV, neg_add_cancel, Real.rpow_zero]
       calc Q₀.vol ^ (1 / p.p j) = 1 * Q₀.vol ^ (1 / p.p j) := (one_mul _).symm
         _ ≤ (Q₀.vol ^ (-(1 / p.p j)) *
-              lpNorm ((TestFun.truncateₗ Q₀ (b j) : TestFun d) : (Fin d → ℝ) → ℝ) (p.p j)) *
+              lpNorm ((LocTestFun.trunc (hb.loc j) Q₀ : TestFun d) : (Fin d → ℝ) → ℝ) (p.p j)) *
               Q₀.vol ^ (1 / p.p j) :=
             mul_le_mul_of_nonneg_right (hacc.trans h) (Real.rpow_nonneg hV.le _)
-        _ = lpNorm ((TestFun.truncateₗ Q₀ (b j) : TestFun d) : (Fin d → ℝ) → ℝ) (p.p j) *
+        _ = lpNorm ((LocTestFun.trunc (hb.loc j) Q₀ : TestFun d) : (Fin d → ℝ) → ℝ) (p.p j) *
               (Q₀.vol ^ (-(1 / p.p j)) * Q₀.vol ^ (1 / p.p j)) := by ring
         _ = _ := by rw [hVmp, mul_one]
     calc Q₀.vol ^ (1 - 1 / p.p k) * lpNorm (g : (Fin d → ℝ) → ℝ) (p.p k)
@@ -488,7 +734,7 @@ theorem GlobalTbHypotheses.testing_globalFamily {T : PerfectCZForm d n} {b : Fin
           rw [← hsum, Real.rpow_sum_of_pos hV]
           ring
       _ ≤ lpNorm (g : (Fin d → ℝ) → ℝ) (p.p k) * ∏ j ∈ Finset.univ.erase k,
-            lpNorm ((TestFun.truncateₗ Q₀ (b j) : TestFun d) : (Fin d → ℝ) → ℝ) (p.p j) :=
+            lpNorm ((LocTestFun.trunc (hb.loc j) Q₀ : TestFun d) : (Fin d → ℝ) → ℝ) (p.p j) :=
           mul_le_mul_of_nonneg_left
             (Finset.prod_le_prod₀ (fun j _ => Real.rpow_nonneg hV.le _) hterm)
             (lpNorm_nonneg _ _)
@@ -497,23 +743,23 @@ theorem GlobalTbHypotheses.testing_globalFamily {T : PerfectCZForm d n} {b : Fin
   have hcf0 : 0 ≤ ∏ j, |cf j| := Finset.prod_nonneg fun j _ => abs_nonneg _
   have hC0 : 0 ≤ B * (3 * Ca + 1 + Ca * B) := by positivity
   have hS0 : 0 ≤ ∑ j, B ^ p.p j := Finset.sum_nonneg fun j _ => Real.rpow_nonneg (by linarith) _
-  have hpn := prodNorm_nonneg p (tupQ b Q₀ k g)
+  have hpn := prodNorm_nonneg p (tupQ hb.loc Q₀ k g)
   rw [hform, hprod, abs_mul, Finset.abs_prod]
-  calc (∏ j, |cf j|) * |T.form (tupQ b Q₀ k g)|
+  calc (∏ j, |cf j|) * |T.form (tupQ hb.loc Q₀ k g)|
       ≤ (∏ j, |cf j|) * (B * (3 * Ca + 1 + Ca * B) *
           (Q₀.vol ^ (1 - 1 / p.p k) * lpNorm (g : (Fin d → ℝ) → ℝ) (p.p k))) :=
         mul_le_mul_of_nonneg_left (by rw [← mul_assoc]; exact hloc) hcf0
-    _ ≤ (∏ j, |cf j|) * (B * (3 * Ca + 1 + Ca * B) * prodNorm p (tupQ b Q₀ k g)) :=
+    _ ≤ (∏ j, |cf j|) * (B * (3 * Ca + 1 + Ca * B) * prodNorm p (tupQ hb.loc Q₀ k g)) :=
         mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left hlow hC0) hcf0
-    _ = B * (3 * Ca + 1 + Ca * B) * ((∏ j, |cf j|) * prodNorm p (tupQ b Q₀ k g)) := by ring
+    _ = B * (3 * Ca + 1 + Ca * B) * ((∏ j, |cf j|) * prodNorm p (tupQ hb.loc Q₀ k g)) := by ring
     _ ≤ (1 + (∑ j, B ^ p.p j) + B * (3 * Ca + 1 + Ca * B)) *
-          ((∏ j, |cf j|) * prodNorm p (tupQ b Q₀ k g)) :=
+          ((∏ j, |cf j|) * prodNorm p (tupQ hb.loc Q₀ k g)) :=
         mul_le_mul_of_nonneg_right (by linarith) (mul_nonneg hcf0 hpn)
 
 /-- **The hypotheses (1.5)–(1.9) of Theorem 1.4 for the family of the reduction**, for paths of
 full length `n` and any collection, with the constant `B₁ = 1 + ∑_j B^{p_j} + B (3 C_a + 1 + C_a B)`.
 [PROVED] -/
-theorem GlobalTbHypotheses.localTbHypotheses {T : PerfectCZForm d n} {b : Fin n → TestFun d}
+theorem GlobalTbHypotheses.localTbHypotheses {T : PerfectCZForm d n} {b : Fin n → (Fin d → ℝ) → ℝ}
     {B : ℝ} (hb : GlobalTbHypotheses T b B) (hB : 1 ≤ B) (p : HolderTuple n) {m : ℕ}
     (hm : m + 1 = n) (C : IPath.Collection n) {Ca : ℝ} (hCa : 0 ≤ Ca)
     (hatom : ∀ (k : Fin n) (Q : DyadicCube d) (h : TestFun d), SupportedOn (h : (Fin d → ℝ) → ℝ) Q →
@@ -525,7 +771,7 @@ theorem GlobalTbHypotheses.localTbHypotheses {T : PerfectCZForm d n} {b : Fin n 
     simp only [globalFamily, Pi.smul_apply, truncate, Set.indicator_of_notMem hx, smul_zero]
   testFun := fun σ _ Q _ l =>
     ((avg (Q (σ l.castSucc)) (b (σ l.castSucc) : (Fin d → ℝ) → ℝ))⁻¹ •
-      TestFun.truncateₗ (Q (σ l.castSucc)) (b (σ l.castSucc))).2
+      LocTestFun.trunc (hb.loc (σ l.castSucc)) (Q (σ l.castSucc))).2
   mean := fun σ _ Q _ l => by
     have hacc := hb.accretive (Q (σ l.castSucc)) (σ l.castSucc)
     have h0 : avg (Q (σ l.castSucc)) (b (σ l.castSucc) : (Fin d → ℝ) → ℝ) ≠ 0 := fun h => by
@@ -540,25 +786,22 @@ theorem GlobalTbHypotheses.localTbHypotheses {T : PerfectCZForm d n} {b : Fin n 
     have hck1 : |(avg (Q (σ l.castSucc)) (b (σ l.castSucc) : (Fin d → ℝ) → ℝ))⁻¹| ≤ 1 := by
       rw [abs_inv]
       exact inv_le_one_of_one_le₀ hacc
-    have hbk := TestFun.lpNorm_truncateₗ_le_supNorm_mul (Q (σ l.castSucc)) (b (σ l.castSucc)) hp0
     have hB0 : 0 < B := by linarith
+    have hbk := hb.lpNorm_trunc_le hB0.le (Q (σ l.castSucc)) (σ l.castSucc) hp0
     have hV := (Q (σ l.castSucc)).vol_pos
     have hVp0 : 0 ≤ (Q (σ l.castSucc)).vol ^ (1 / p.p (σ l.castSucc)) := Real.rpow_nonneg hV.le _
     have hn : lpNorm (globalFamily b m σ Q l) (p.p (σ l.castSucc)) ≤
         B * (Q (σ l.castSucc)).vol ^ (1 / p.p (σ l.castSucc)) := by
-      rw [globalFamily_eq, TestFun.lpNorm_smul]
-      calc _ ≤ 1 * (supNorm (b (σ l.castSucc) : (Fin d → ℝ) → ℝ) *
-            (Q (σ l.castSucc)).vol ^ (1 / p.p (σ l.castSucc))) :=
+      rw [globalFamily_eq hb.loc, TestFun.lpNorm_smul]
+      calc _ ≤ 1 * (B * (Q (σ l.castSucc)).vol ^ (1 / p.p (σ l.castSucc))) :=
             mul_le_mul hck1 hbk (lpNorm_nonneg _ _) zero_le_one
-        _ ≤ _ := by
-            rw [one_mul]
-            exact mul_le_mul_of_nonneg_right (hb.bound _) hVp0
+        _ = _ := one_mul _
     have hint : ∫ x, |globalFamily b m σ Q l x| ^ p.p (σ l.castSucc) =
         lpNorm (globalFamily b m σ Q l) (p.p (σ l.castSucc)) ^ p.p (σ l.castSucc) :=
       (lpNorm_rpow_eq_integral hp0 (by
-        rw [globalFamily_eq]
+        rw [globalFamily_eq hb.loc]
         exact TestFun.memLp ((avg (Q (σ l.castSucc)) (b (σ l.castSucc) : (Fin d → ℝ) → ℝ))⁻¹ •
-          TestFun.truncateₗ (Q (σ l.castSucc)) (b (σ l.castSucc))).2 _)).symm
+          LocTestFun.trunc (hb.loc (σ l.castSucc)) (Q (σ l.castSucc))).2 _)).symm
     rw [hint]
     calc lpNorm (globalFamily b m σ Q l) (p.p (σ l.castSucc)) ^ p.p (σ l.castSucc)
         ≤ (B * (Q (σ l.castSucc)).vol ^ (1 / p.p (σ l.castSucc))) ^ p.p (σ l.castSucc) :=
@@ -605,6 +848,43 @@ theorem globalTb_of_localT1 (hn : 2 ≤ n) (p : HolderTuple n) (h13 : LocalT1 d 
   refine ⟨C, fun T b hb f => ?_⟩
   exact hC T (IPath.exampleCollection (m + 1)) (IPath.exampleCollection_admissible _)
     (globalFamily b m) (hb.localTbHypotheses hB p rfl _ hCa0 hatom') f
+
+/-- The zero form, a perfect Calderón–Zygmund form with kernel `0`. -/
+noncomputable def PerfectCZForm.zero (d n : ℕ) : PerfectCZForm d n where
+  form := 0
+  decay := fun p _ f _ _ => by
+    rw [zero_apply, abs_zero]
+    exact prodNorm_nonneg p f
+  smooth := fun _ _ _ _ _ _ _ _ => zero_apply _
+  truncation := ⟨0, Submodule.zero_mem _, fun f => by simp⟩
+
+/-- **The hypotheses of Theorem 1.11 are satisfiable, with `b_j = 1`**: for every `B ≥ 1` the zero
+form satisfies (1.12)–(1.15) with the constant functions `b_1 = ⋯ = b_n = 1`, which are locally
+dyadic test functions without bounded support. In particular Theorem 1.11 is not vacuous, and with
+`b_j = 1` its hypotheses are those of a global `T(1)` theorem. [PROVED] -/
+theorem globalTbHypotheses_one {n : ℕ} {B : ℝ} (hB : 1 ≤ B) :
+    ∃ T : PerfectCZForm d n, GlobalTbHypotheses T (fun _ _ => (1 : ℝ)) B := by
+  refine ⟨PerfectCZForm.zero d n, ?_⟩
+  have hloc : ∀ _ : Fin n, (fun _ : Fin d → ℝ => (1 : ℝ)) ∈ LocTestFun d := fun _ Q =>
+    indicator_mem_testFun Q
+  refine ⟨hloc, fun Q _ => ?_, fun _ => ?_, fun Q f _ => ?_, fun K hK hrep j₀ g => ?_⟩
+  · have h1 : avg Q (fun _ : Fin d → ℝ => (1 : ℝ)) = 1 := by
+      rw [avg, setIntegral_const, measureReal_def, Q.volume_toSet,
+        ENNReal.toReal_ofReal Q.vol_pos.le, smul_eq_mul, mul_one, div_self Q.vol_pos.ne']
+    rw [h1, abs_one]
+  · rw [eLpNorm_exponent_top]
+    calc eLpNormEssSup (fun _ : Fin d → ℝ => (1 : ℝ)) volume ≤ ENNReal.ofReal 1 :=
+          eLpNormEssSup_le_of_ae_bound (ae_of_all _ fun x => by simp)
+      _ ≤ ENNReal.ofReal B := ENNReal.ofReal_le_ofReal hB
+    exact aestronglyMeasurable_const
+  · show |(0 : MultilinearMap ℝ (fun _ : Fin n => TestFun d) ℝ) f| ≤ B * Q.vol
+    rw [zero_apply, abs_zero]
+    exact mul_nonneg (by linarith) Q.vol_pos.le
+  · obtain ⟨M, hM⟩ := TestFunProd.exists_abs_lt_pow hK
+    rw [← form_update_box_eq_integral (PerfectCZForm.zero d n) hloc hrep hM j₀ g]
+    show |(0 : MultilinearMap ℝ (fun _ : Fin n => TestFun d) ℝ) _| ≤ _
+    rw [zero_apply, abs_zero]
+    exact mul_nonneg (by linarith) (integral_nonneg fun _ => Real.sqrt_nonneg _)
 
 end GlobalReduction
 
@@ -4120,103 +4400,6 @@ theorem abs_form_le_of_supported (hd : d ≠ 0) {p : HolderTuple n} {B : ℝ} (h
         rw [add_mul, Finset.sum_mul]
 
 /-! ### The cubes at infinity -/
-
-/-- The `2^d` dyadic cubes of side length `2^M` at the origin: `∏_i [0, 2^M)` or `[-2^M, 0)`
-according to `κ_i`. -/
-def quad (M : ℕ) (κ : Fin d → Bool) : DyadicCube d := ⟨M, fun i => if κ i then 0 else -1⟩
-
-theorem quad_vol (M : ℕ) (κ : Fin d → Bool) : (quad M κ).vol = 2 ^ (M * d) := by
-  show (2 : ℝ) ^ ((M : ℤ) * (d : ℤ)) = 2 ^ (M * d)
-  have h := zpow_natCast (2 : ℝ) (M * d)
-  push_cast at h
-  exact h
-
-theorem quad_injective (M : ℕ) : Function.Injective (quad (d := d) M) := by
-  intro κ κ' h
-  funext i
-  have h1 := congrArg (fun Q : DyadicCube d => Q.l i) h
-  simp only [quad] at h1
-  revert h1
-  cases κ i <;> cases κ' i <;> simp
-
-theorem quad_disjoint {M : ℕ} {κ κ' : Fin d → Bool} (h : κ ≠ κ') :
-    Disjoint (quad M κ).toSet (quad M κ').toSet :=
-  (DyadicCube.eq_or_disjoint_of_m_eq (quad M κ) (quad M κ') rfl).resolve_left
-    fun e => h (quad_injective M e)
-
-theorem mem_quad_iff (M : ℕ) (κ : Fin d → Bool) (x : Fin d → ℝ) :
-    x ∈ (quad M κ).toSet ↔
-      ∀ i, if κ i then 0 ≤ x i ∧ x i < 2 ^ M else -(2 : ℝ) ^ M ≤ x i ∧ x i < 0 := by
-  show (∀ i, (2 : ℝ) ^ (M : ℤ) * ((if κ i then 0 else -1 : ℤ) : ℝ) ≤ x i ∧
-    x i < (2 : ℝ) ^ (M : ℤ) * (((if κ i then 0 else -1 : ℤ) : ℝ) + 1)) ↔ _
-  refine forall_congr' fun i => ?_
-  rw [zpow_natCast]
-  cases κ i <;> simp
-
-theorem exists_mem_quad {M : ℕ} {x : Fin d → ℝ} (hx : ∀ i, |x i| < 2 ^ M) :
-    ∃ κ, x ∈ (quad M κ).toSet := by
-  refine ⟨fun i => decide (0 ≤ x i), ?_⟩
-  rw [mem_quad_iff]
-  intro i
-  have h := abs_lt.mp (hx i)
-  by_cases h0 : 0 ≤ x i
-  · simp [h0, h.2]
-  · simp [h0, h.1.le, not_le.mp h0]
-
-/-- A test function supported in `(-2^M, 2^M)^d` is the sum of its truncations to the cubes
-at the origin. [PROVED] -/
-theorem sum_truncateₗ_quad {M : ℕ} (f : TestFun d)
-    (hf : ∀ x, (f : (Fin d → ℝ) → ℝ) x ≠ 0 → ∀ i, |x i| < 2 ^ M) :
-    ∑ κ : Fin d → Bool, TestFun.truncateₗ (quad M κ) f = f := by
-  apply Subtype.ext
-  funext x
-  simp only [Submodule.coe_sum, Finset.sum_apply, TestFun.coe_truncateₗ, truncate]
-  by_cases hfx : (f : (Fin d → ℝ) → ℝ) x = 0
-  · rw [hfx]
-    exact Finset.sum_eq_zero fun κ _ => Set.indicator_apply_eq_zero.mpr fun _ => hfx
-  · obtain ⟨κ₀, hκ₀⟩ := exists_mem_quad (hf x hfx)
-    rw [Finset.sum_eq_single κ₀ (fun κ _ hne =>
-      Set.indicator_of_notMem (Set.disjoint_right.mp (quad_disjoint hne) hκ₀) _)
-      (fun h => absurd (Finset.mem_univ κ₀) h), Set.indicator_of_mem hκ₀]
-
-/-- Every dyadic test function is supported in some box `(-2^M, 2^M)^d`. [PROVED] -/
-theorem TestFun.exists_abs_lt_pow (f : TestFun d) :
-    ∃ M : ℕ, ∀ x, (f : (Fin d → ℝ) → ℝ) x ≠ 0 → ∀ i, |x i| < 2 ^ M := by
-  suffices h : ∃ ρ : ℝ, ∀ x, (f : (Fin d → ℝ) → ℝ) x ≠ 0 → ∀ i, |x i| ≤ ρ by
-    obtain ⟨ρ, hρ⟩ := h
-    obtain ⟨M, hM⟩ := pow_unbounded_of_one_lt ρ (by norm_num : (1 : ℝ) < 2)
-    exact ⟨M, fun x hx i => (hρ x hx i).trans_lt hM⟩
-  have hf : (f : (Fin d → ℝ) → ℝ) ∈
-      Submodule.span ℝ (Set.range (DyadicCube.indicator (d := d))) := f.2
-  refine Submodule.span_induction (p := fun g _ => ∃ ρ : ℝ, ∀ x, g x ≠ 0 → ∀ i, |x i| ≤ ρ)
-    ?_ ?_ ?_ ?_ hf
-  · rintro g ⟨P, rfl⟩
-    refine ⟨(2 : ℝ) ^ P.m * ∑ i, (|(P.l i : ℝ)| + 1), fun x hx i => ?_⟩
-    have hxP : x ∈ P.toSet := by
-      by_contra h
-      exact hx (Set.indicator_of_notMem h _)
-    obtain ⟨h1, h2⟩ := hxP i
-    have hpos : (0 : ℝ) < 2 ^ P.m := zpow_pos (by norm_num) _
-    have hi : |(P.l i : ℝ)| + 1 ≤ ∑ i, (|(P.l i : ℝ)| + 1) :=
-      Finset.single_le_sum (f := fun i => |(P.l i : ℝ)| + 1) (fun i _ => by positivity)
-        (Finset.mem_univ i)
-    have e2 := mul_le_mul_of_nonneg_left hi hpos.le
-    rw [abs_le]
-    constructor
-    · have e1 := mul_le_mul_of_nonneg_left (neg_abs_le (P.l i : ℝ)) hpos.le
-      linarith
-    · have e3 := mul_le_mul_of_nonneg_left
-        (show (P.l i : ℝ) + 1 ≤ |(P.l i : ℝ)| + 1 by linarith [le_abs_self (P.l i : ℝ)]) hpos.le
-      linarith
-  · exact ⟨0, fun x hx => absurd rfl hx⟩
-  · rintro g h _ _ ⟨ρ₁, h₁⟩ ⟨ρ₂, h₂⟩
-    refine ⟨max ρ₁ ρ₂, fun x hx i => ?_⟩
-    by_cases hg : g x = 0
-    · have hh : h x ≠ 0 := fun hh => hx (by simp [hg, hh])
-      exact (h₂ x hh i).trans (le_max_right _ _)
-    · exact (h₁ x hg i).trans (le_max_left _ _)
-  · rintro c g _ ⟨ρ, hρ⟩
-    exact ⟨ρ, fun x hx i => hρ x (fun hg => hx (by simp [hg])) i⟩
 
 /-- **One slot of perfect smoothness**: if `m_i` is supported on `P` and `m_{i'}` vanishes on `P`,
 then `Λ(m) = [m_i]_P Λ(m with 𝟙_P in the slot i)`. [PROVED] -/

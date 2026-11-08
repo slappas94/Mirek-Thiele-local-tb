@@ -117,8 +117,10 @@ $`k`$, so the hypotheses are vacuous. The case $`k=1`$ is Theorem 1.3.
 
 ### Theorem 1.11 (perfect multilinear global T(b) theorem)
 
+Call a function $`b`$ on $`\mathbb R^d`$ a *locally dyadic test function* if its truncation
+$`b\,\mathbb 1_Q`$ to every dyadic cube $`Q`$ is a dyadic test function; for example $`b=1`$.
 Let $`B\ge 1`$, let $`\Lambda`$ be a perfect Calderón–Zygmund form, and let
-$`b_1,\dots,b_n`$ be dyadic test functions such that, for all dyadic cubes $`Q`$ and all
+$`b_1,\dots,b_n`$ be locally dyadic test functions such that, for all dyadic cubes $`Q`$ and all
 $`j`$,
 
 * **(1.12) pseudo-accretivity:** $`|[b_j]_Q|\ge 1`$;
@@ -135,7 +137,14 @@ Sg(x)=\Bigl(\sum_{P\ni x}\bigl|[g]_{P_x}-[g]_P\bigr|^2\Bigr)^{1/2},
 ```
 
 the sum running over the dyadic cubes $`P`$ containing $`x`$, and $`P_x`$ denoting the child of
-$`P`$ containing $`x`$. Then
+$`P`$ containing $`x`$. In (1.15) the entries $`b_j`$ are not dyadic test functions, and
+$`\Lambda(b_1,\dots,g,\dots,b_n)`$ is the kernel integral
+
+```math
+\int_{\mathbb R^{dn}}K(x)\,b_1(x_1)\cdots g(x_j)\cdots b_n(x_n)\,dx
+```
+
+for a kernel $`K`$ of $`\Lambda`$ as in the qualitative truncation (iii). Then
 
 ```math
 |\Lambda(f_1,\dots,f_n)|\le C\prod_{j=1}^n\|f_j\|_{p_j}
@@ -145,6 +154,11 @@ for all $`n`$-tuples of dyadic test functions.
 
 Condition (1.14) is taken in its scale-invariant form with the factor $`|Q|`$; the paper writes
 $`\le B`$. See the modelling choices below.
+
+**The hypotheses are satisfiable.** The zero form with $`b_1=\dots=b_n=1`$ satisfies
+(1.12)–(1.15) for every $`B\ge 1`$ (`MirekThiele.theorem_1_11_hypotheses_satisfiable`). With
+$`b_j=1`$ and an arbitrary perfect Calderón–Zygmund form, the hypotheses are those of a global
+T(1) theorem.
 
 ## Main Lean declarations
 
@@ -158,12 +172,13 @@ proofs use only the permitted axioms.
 | Theorem 1.3 | `MirekThiele.theorem_1_3 : LocalT1 d n p` | `MirekThiele.localT1` |
 | Theorem 1.4 | `MirekThiele.theorem_1_4 : LocalTb d n k p` | `MirekThiele.localTb_all` |
 | Theorem 1.11 | `MirekThiele.theorem_1_11 : GlobalTb d n p` | `MirekThiele.globalTb_all` |
+| Hypotheses of 1.11 satisfiable | `MirekThiele.theorem_1_11_hypotheses_satisfiable` | `MirekThiele.globalTbHypotheses_one` |
 
 The hypotheses are the Lean structures `PerfectCZForm` (fields `decay`, `smooth`,
 `truncation`), `T1Testing`, `LocalTbHypotheses` (fields `support`, `testFun`, `mean`, `norm`,
-`interdep`, `testing`) and `GlobalTbHypotheses` (fields `accretive`, `bound`, `weak`, `bmo`),
-all defined in `Challenge.lean`. The proofs are in
-[`MirekThiele/T1Theorem.lean`](MirekThiele/T1Theorem.lean).
+`interdep`, `testing`) and `GlobalTbHypotheses` (fields `loc`, `accretive`, `bound`, `weak`,
+`bmo`), with the class `LocTestFun` of locally dyadic test functions, all defined in
+`Challenge.lean`. The proofs are in [`MirekThiele/T1Theorem.lean`](MirekThiele/T1Theorem.lean).
 
 The supporting results of Section 2 of the paper are also formalized and proved:
 
@@ -186,9 +201,13 @@ These are also listed in the module docstring of `Challenge.lean` and in
   global/local reduction uses.
 * The dyadic Hardy norm in (1.15) is the $`L^1`$ norm of the dyadic square function, one of the
   standard equivalent norms; $`\|\cdot\|_{L^\infty}`$ is the essential supremum.
-* The testing functions $`b_{\sigma,\mathbf Q,j}`$ of Theorem 1.4 and the functions $`b_j`$ of
-  Theorem 1.11 are dyadic test functions. The paper leaves this implicit, since $`\Lambda`$ is
-  only defined on dyadic test functions.
+* The testing functions $`b_{\sigma,\mathbf Q,j}`$ of Theorem 1.4 are dyadic test functions. The
+  paper leaves this implicit, since $`\Lambda`$ is only defined on dyadic test functions.
+* The functions $`b_j`$ of Theorem 1.11 are locally dyadic test functions, which admits
+  $`b_j=1`$; pseudo-accretivity on every dyadic cube rules out functions of bounded support. In
+  the BMO condition (1.15), $`\Lambda(b_1,\dots,g,\dots,b_n)`$ is evaluated through a kernel of
+  $`\Lambda`$ as in the qualitative truncation (iii); kernels of $`\Lambda`$ agree almost
+  everywhere, and the bound is required for each of them.
 * $`I_n`$ is indexed by `Fin n`, and the testing functions are indexed by their position in the
   path; since paths are injective, this is equivalent to the paper's index
   $`j\in\sigma(I_{k-1})`$.

@@ -4,7 +4,8 @@
   "theorem_names": [
     "MirekThiele.theorem_1_3",
     "MirekThiele.theorem_1_4",
-    "MirekThiele.theorem_1_11"
+    "MirekThiele.theorem_1_11",
+    "MirekThiele.theorem_1_11_hypotheses_satisfiable"
   ],
   "definition_names": [],
   "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],

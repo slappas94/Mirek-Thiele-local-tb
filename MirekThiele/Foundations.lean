@@ -2539,29 +2539,46 @@ noncomputable def hardyNorm (g : (Fin d → ℝ) → ℝ) : ℝ :=
   ∫ x, Real.sqrt (∑' P : DyadicCube d,
     P.toSet.indicator (fun y => (avg (P.childAt y) g - avg P g) ^ 2) x)
 
-/-- Hypotheses (1.12)–(1.15) of Theorem 1.11. The weak boundedness condition (1.14) is taken in
-its standard scale-invariant form `|Λ(b₁𝟙_Q, …, b_n𝟙_Q)| ≤ B |Q|` (the paper writes `≤ B`, which is
-not dimensionally consistent with (1.16): a bounded form satisfies `|Λ(b₁𝟙_Q, …, b_n𝟙_Q)| ≤
-C B^n |Q|`, and the factor `|Q|` is needed in the global/local reduction). -/
-structure GlobalTbHypotheses {n : ℕ} (T : PerfectCZForm d n) (b : Fin n → TestFun d) (B : ℝ) :
-    Prop where
+/-- A *locally dyadic test function*: a function `b` on `ℝ^d` whose truncation `b 𝟙_Q` to every
+dyadic cube `Q` is a dyadic test function. Constant functions, in particular `b = 1`, are of this
+kind, so a locally dyadic test function need not have bounded support. -/
+def LocTestFun (d : ℕ) : Set ((Fin d → ℝ) → ℝ) :=
+  {b | ∀ Q : DyadicCube d, truncate Q b ∈ TestFun d}
+
+/-- Hypotheses (1.12)–(1.15) of Theorem 1.11, for locally dyadic test functions `b_1, …, b_n` (for
+example `b_j = 1`). The weak boundedness condition (1.14) is taken in its standard scale-invariant
+form `|Λ(b₁𝟙_Q, …, b_n𝟙_Q)| ≤ B |Q|` (the paper writes `≤ B`, which is not dimensionally consistent
+with (1.16): a bounded form satisfies `|Λ(b₁𝟙_Q, …, b_n𝟙_Q)| ≤ C B^n |Q|`, and the factor `|Q|` is
+needed in the global/local reduction). In the BMO condition (1.15) the entries `b_j` need not be
+dyadic test functions, so `Λ(b_1, …, g, …, b_n)` is evaluated through a kernel `K` of `Λ` as in the
+qualitative truncation (iii), `∫ K(x) ∏_j f_j(x_j) dx`; the bound is required for every such kernel
+(two kernels of `Λ` agree almost everywhere). -/
+structure GlobalTbHypotheses {n : ℕ} (T : PerfectCZForm d n) (b : Fin n → (Fin d → ℝ) → ℝ)
+    (B : ℝ) : Prop where
+  /-- the functions `b_j` are locally dyadic test functions -/
+  loc : ∀ j, b j ∈ LocTestFun d
   /-- pseudo-accretivity (1.12) -/
   accretive : ∀ (Q : DyadicCube d) (j : Fin n), 1 ≤ |avg Q (b j)|
-  /-- norm bound (1.13) -/
-  bound : ∀ j, supNorm (b j : (Fin d → ℝ) → ℝ) ≤ B
+  /-- norm bound (1.13): `‖b_j‖_∞ ≤ B` -/
+  bound : ∀ j, eLpNorm (b j) ⊤ volume ≤ ENNReal.ofReal B
   /-- weak boundedness (1.14) -/
   weak : ∀ (Q : DyadicCube d) (f : Fin n → TestFun d),
     (∀ j, (f j : (Fin d → ℝ) → ℝ) = truncate Q (b j)) → |T.form f| ≤ B * Q.vol
-  /-- BMO condition (1.15) -/
-  bmo : ∀ (j₀ : Fin n) (g : TestFun d) (f : Fin n → TestFun d),
-    f j₀ = g → (∀ j, j ≠ j₀ → f j = b j) →
-    |T.form f| ≤ B * hardyNorm (g : (Fin d → ℝ) → ℝ)
+  /-- BMO condition (1.15), with `Λ(b_1, …, g, …, b_n)` evaluated through a kernel of `Λ` -/
+  bmo : ∀ K ∈ TestFunProd d n,
+    (∀ f : Fin n → TestFun d, T.form f = ∫ x, K x * ∏ j, (f j : (Fin d → ℝ) → ℝ) (x j)) →
+    ∀ (j₀ : Fin n) (g : TestFun d),
+      |∫ x, K x * ∏ j, (Function.update b j₀ (g : (Fin d → ℝ) → ℝ)) j (x j)| ≤
+        B * hardyNorm (g : (Fin d → ℝ) → ℝ)
 
-/-- **Theorem 1.11** (perfect multilinear global T(b) theorem). [STATEMENT; proved at the end of
-the file as `globalTb_all`] -/
+/-- **Theorem 1.11** (perfect multilinear global `T(b)` theorem): for `d ≥ 1`, `n ≥ 2` and
+`B ≥ 1` there is a constant `C`, depending only on `d`, `n`, `B` and the Hölder tuple, such that
+for every perfect Calderón–Zygmund form and all locally dyadic test functions `b_1, …, b_n`
+satisfying (1.12)–(1.15) with constant `B`, `|Λ(f)| ≤ C ∏ ‖f_j‖_{p_j}` for all tuples of dyadic
+test functions. -/
 def GlobalTb (d n : ℕ) (p : HolderTuple n) : Prop :=
   1 ≤ d → 2 ≤ n → ∀ B : ℝ, 1 ≤ B → ∃ C : ℝ,
-    ∀ (T : PerfectCZForm d n) (b : Fin n → TestFun d), GlobalTbHypotheses T b B →
+    ∀ (T : PerfectCZForm d n) (b : Fin n → (Fin d → ℝ) → ℝ), GlobalTbHypotheses T b B →
     ∀ f : Fin n → TestFun d, |T.form f| ≤ C * prodNorm p f
 
 /-! ## §2 Ingredients of the proof of Theorem 1.4

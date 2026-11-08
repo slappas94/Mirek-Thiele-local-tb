@@ -6,7 +6,7 @@ public import MirekThiele
 # Proved solution
 
 This module imports the full proof development (`MirekThiele`, four modules) and restates the
-three advertised declarations of `Challenge.lean` with the same names and types. Comparator
+four advertised declarations of `Challenge.lean` with the same names and types. Comparator
 checks that the statements agree with `Challenge.lean` and that the proofs use only the
 permitted axioms (`propext`, `Quot.sound`, `Classical.choice`).
 
@@ -15,6 +15,8 @@ permitted axioms (`propext`, `Quot.sound`, `Classical.choice`).
   `MirekThiele.localTb_all`.
 * `theorem_1_11` is Theorem 1.11 (perfect multilinear global `T(b)` theorem),
   `MirekThiele.globalTb_all`.
+* `theorem_1_11_hypotheses_satisfiable` shows that the hypotheses of Theorem 1.11 hold for the
+  zero form with `b_j = 1`, `MirekThiele.globalTbHypotheses_one`.
 -/
 
 @[expose] public section
@@ -32,5 +34,10 @@ theorem theorem_1_4 {d n : ℕ} (p : HolderTuple n) (k : ℕ) : LocalTb d n k p 
 /-- **Theorem 1.11** (perfect multilinear global `T(b)` theorem). -/
 theorem theorem_1_11 {d n : ℕ} (p : HolderTuple n) : GlobalTb d n p :=
   globalTb_all p
+
+/-- **The hypotheses of Theorem 1.11 are satisfiable, with `b_j = 1`** (the zero form). -/
+theorem theorem_1_11_hypotheses_satisfiable {d n : ℕ} {B : ℝ} (hB : 1 ≤ B) :
+    ∃ T : PerfectCZForm d n, GlobalTbHypotheses T (fun _ _ => (1 : ℝ)) B :=
+  globalTbHypotheses_one hB
 
 end MirekThiele
